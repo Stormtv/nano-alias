@@ -62,4 +62,25 @@ methods.find = (aliasName) => {
   });
 };
 
+methods.findAll = (page) => {
+  return new Promise((resolve, reject) => {
+    if (!page || page === null) {
+      page = 0;
+    }
+    models.alias
+      .findAll({offset:page*10,limit:10})
+      .then((aliases) => {
+        if (!aliases) { return reject('Could not get requests'); }
+        let results = [];
+        aliases.forEach((alias) => {
+          let result = alias.dataValues;
+          delete result.email;
+          results.push(result);
+        });
+        resolve(results);
+      })
+      .catch((err) => { reject(err); });
+  });
+};
+
 module.exports = methods;

@@ -51,4 +51,28 @@ router.get('/:alias', (req, res) => {
     });
 });
 
+router.post('/', (req, res) => {
+  Alias
+    .findAll(req.body.page)
+    .then((alias) => {
+      res
+        .status(200)
+        .json({
+          'status': 'SUCCESS',
+          'message': 'Successfully found the aliases',
+          'data': {
+            'alias': alias
+          }
+        });
+    })
+    .catch((err) => {
+      res
+        .status(422)
+        .json({
+          'status': 'ERROR',
+          'message': err
+        });
+    });
+});
+
 module.exports = router;
