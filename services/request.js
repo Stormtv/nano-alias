@@ -70,16 +70,14 @@ methods.find = (requestId) => {
 
 methods.findAll = (page) => {
   return new Promise((resolve, reject) => {
-    let page = 0;
-    if (data.page) {
-      page = data.page;
+    if (!page || page === null) {
+      page = 0;
     }
     models.request
       .findAll({offset:page*10,limit:10})
-      .then((request) => {
-        if (!request) { return reject('Could not get requests'); }
-        let result = request.dataValues;
-        resolve(result);
+      .then((requests) => {
+        if (!requests) { return reject('Could not get requests'); }
+        resolve(requests);
       })
       .catch((err) => { reject(err); });
   });

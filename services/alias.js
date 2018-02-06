@@ -70,7 +70,7 @@ methods.findAll = (page) => {
     models.alias
       .findAll({offset:page*10,limit:10})
       .then((aliases) => {
-        if (!aliases) { return reject('Could not get requests'); }
+        if (!aliases) { return reject('Could not get aliases'); }
         let results = [];
         aliases.forEach((alias) => {
           let result = alias.dataValues;

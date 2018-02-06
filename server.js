@@ -11,9 +11,11 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Routes
 const alias = require('./routes/alias');
+const request = require('./routes/request');
 
 // Set routes
 app.use('/alias', alias);
+app.use('/request', request);
 app.get('/reset', (req, res) => {
   if (config.environment === "development") {
     models.sequelize.sync({force:true});
