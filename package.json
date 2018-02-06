@@ -1,7 +1,7 @@
 {
   "name": "alias",
   "version": "0.0.1",
-  "description": "",
+  "description": "Alias system for the Nano Cryptocurrency",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -13,7 +13,7 @@
   "author": "Tyler Storm",
   "license": "MIT",
   "bugs": {
-    "url": ""
+    "url": "https://github.com/Stormtv/alias/issues"
   },
   "homepage": "",
   "dependencies": {
