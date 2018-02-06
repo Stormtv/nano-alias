@@ -3,7 +3,7 @@ const router = express.Router();
 const config = require('../config.json');
 const Request = require('../services/request');
 
-router.post('/request', (req, res) => {
+router.post('/create', (req, res) => {
   Request
     .create(req.body)
     .then((request) => {
