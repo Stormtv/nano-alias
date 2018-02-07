@@ -16,6 +16,12 @@ methods.create = (data) => {
     if (typeof data.email !== 'string') {
       return reject('Invalid email provided');
     }
+    if (!data.listed) {
+      data.listed = false;
+    }
+    if (data.listed && typeof data.listed !== 'boolean') {
+      return reject('Invalid email provided');
+    }
     if (!data.alias) {
       return reject('No alias provided');
     }
@@ -30,7 +36,8 @@ methods.create = (data) => {
       .create({
         alias: data.alias.toLowerCase(),
         address: data.address,
-        email: data.email
+        email: data.email,
+        listed: data.listed
       })
       .then((alias) => {
         resolve(alias.dataValues);
