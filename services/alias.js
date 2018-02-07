@@ -6,6 +6,7 @@ const xrbRegex = /(xrb_[13][a-km-zA-HJ-NP-Z0-9]{59})/g;
 */
 const XRegExp = require('xregexp');
 const letterRegex = XRegExp('^\\p{L}+$');
+const numberRegex = /^(\+[0-9]{1,3}|0)[0-9]{3}( ){0,1}[0-9]{7,8}\b/;
 const jwt = require('jsonwebtoken');
 const config = require('../config.json');
 let methods = {};
@@ -34,8 +35,18 @@ methods.create = (data) => {
     if (!data.alias) {
       return reject('No alias provided');
     }
-    if (typeof data.alias !== 'string' || !letterRegex.test(data.alias.charAt(0))) {
+    if (typeof data.alias !== 'string') {
       return reject('Invalid alias provided');
+    }
+    if (!letterRegex.test(data.alias.charAt(0))) {
+      //Not a valid alias is this a valid phone number?
+      if (!numberRegex.test(data.alias)) {
+        //Not a valid phone alias
+        return reject('Invalid alias format: must be E164 phone number or must start with a Unicode Letter');
+      } else {
+        //Valid phone number - Never List Phone Numbers
+        data.listed = false;
+      }
     }
     if (data.alias.length < 4) {
       return reject('Aliases must be at least 4 characters in length aliases of 3 character and less are reserved');
