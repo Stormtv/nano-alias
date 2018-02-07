@@ -68,7 +68,15 @@ methods.findAll = (page) => {
       page = 0;
     }
     models.alias
-      .findAll({offset:page*10,limit:10})
+      .findAll(
+        where: {
+          listed:true
+        },
+        {
+          offset:page*10,
+          limit:10
+        }
+      )
       .then((aliases) => {
         if (!aliases) { return reject('Could not get aliases'); }
         let results = [];

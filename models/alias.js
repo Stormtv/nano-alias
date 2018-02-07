@@ -18,6 +18,10 @@ module.exports = (sequelize, DataTypes) => {
       validate: {
         isEmail: true
       }
+    },
+    listed: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
     }
   }, {
     freezeTableName: true,
