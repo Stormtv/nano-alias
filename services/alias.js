@@ -1,5 +1,7 @@
 const models = require('../models');
 const xrbRegex = /(xrb_[13][a-km-zA-HJ-NP-Z0-9]{59})/g;
+const jwt = require('jsonwebtoken');
+const config = require('../config.json');
 let methods = {};
 
 methods.create = (data) => {
@@ -19,8 +21,9 @@ methods.create = (data) => {
     if (!data.listed) {
       data.listed = false;
     }
-    if (data.listed && typeof data.listed !== 'boolean') {
-      return reject('Invalid email provided');
+    if (data.listed && typeof data.listed === 'string' &&
+      !(data.listed === "true" || data.listed === "false")) {
+      return reject('Invalid listed provided');
     }
     if (!data.alias) {
       return reject('No alias provided');
@@ -40,6 +43,7 @@ methods.create = (data) => {
         listed: data.listed
       })
       .then((alias) => {
+        alias.dataValues.aliasSeed = jwt.sign(alias.dataValues.alias,config.privateKey);
         resolve(alias.dataValues);
       })
       .catch((err) => {
