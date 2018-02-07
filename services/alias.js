@@ -76,12 +76,12 @@ methods.findAll = (page) => {
     }
     models.alias
       .findAll(
-        where: {
-          listed:true
-        },
         {
           offset:page*10,
-          limit:10
+          limit:10,
+          where: {
+            listed:true
+          }
         }
       )
       .then((aliases) => {
