@@ -12,9 +12,11 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Routes
 const alias = require('./routes/alias');
 const request = require('./routes/request');
+const address = require('./routes/address');
 
 // Set routes
 app.use('/alias', alias);
+app.use('/address', address);
 app.use('/request', request);
 app.get('/reset', (req, res) => {
   if (config.environment === "development") {
