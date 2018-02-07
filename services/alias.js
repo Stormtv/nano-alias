@@ -1,5 +1,11 @@
 const models = require('../models');
 const xrbRegex = /(xrb_[13][a-km-zA-HJ-NP-Z0-9]{59})/g;
+/*
+  XRegExp Allows us to check the unicode category and
+  ensure it is a letter regardless of language.
+*/
+const XRegExp = require('xregexp');
+const letterRegex = XRegExp('^\\p{L}+$');
 const jwt = require('jsonwebtoken');
 const config = require('../config.json');
 let methods = {};
@@ -28,7 +34,7 @@ methods.create = (data) => {
     if (!data.alias) {
       return reject('No alias provided');
     }
-    if (typeof data.alias !== 'string') {
+    if (typeof data.alias !== 'string' || !letterRegex.test(data.alias.charAt(0))) {
       return reject('Invalid alias provided');
     }
     if (data.alias.length < 4) {
