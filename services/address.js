@@ -1,5 +1,6 @@
 const models = require('../models');
 const xrbRegex = /(xrb_[13][a-km-zA-HJ-NP-Z0-9]{59})/g;
+const jdenticon = require("jdenticon");
 let methods = {};
 
 methods.find = (address) => {
@@ -19,6 +20,7 @@ methods.find = (address) => {
         let results = [];
         aliases.forEach((alias) => {
           let result = alias.dataValues;
+          result.avatar = jdenticon.toSvg(result.token, 64);
           delete result.email;
           delete result.token;
           results.push(result);

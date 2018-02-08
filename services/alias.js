@@ -177,7 +177,7 @@ methods.edit = (data) => {
             alias.save()
             .then((updatedAlias) => {
               updatedAlias.dataValues.aliasSeed = jwt.sign(updatedAlias.dataValues.token, config.privateKey);
-              updatedAlias.avatar = jdenticon.toSvg(updatedAlias.dataValues.token, 64);
+              updatedAlias.dataValues.avatar = jdenticon.toSvg(updatedAlias.dataValues.token, 64);
               delete updatedAlias.dataValues.token;
               resolve(updatedAlias.dataValues);
             })
