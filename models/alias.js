@@ -19,10 +19,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     email: {
       type: DataTypes.STRING,
-      require: true,
-      validate: {
-        isEmail: true
-      }
+      require: true
     },
     listed: {
       type: DataTypes.BOOLEAN,

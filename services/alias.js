@@ -15,6 +15,17 @@ const Datauri = require('datauri');
 const config = require('../config.json');
 let methods = {};
 
+let encryptEmail = (data) => {
+  if (data) {
+    var cipher = crypto.createCipher('aes-256-cbc', config.privateKey);
+    var crypted = cipher.update(data, 'utf-8', 'hex');
+    crypted += cipher.final('hex');
+    return crypted;
+  } else {
+    return "";
+  }
+};
+
 methods.create = (data) => {
   return new Promise((resolve, reject) => {
     if (!data.address) {
@@ -35,6 +46,8 @@ methods.create = (data) => {
     if (data.listed && typeof data.listed === 'string' &&
       !(data.listed === "true" || data.listed === "false")) {
       return reject('Invalid listed provided');
+    } else {
+      data.listed = data.listed == 'true';
     }
     if (!data.alias) {
       return reject('No alias provided');
@@ -57,26 +70,40 @@ methods.create = (data) => {
     if (data.alias.length < 4) {
       return reject('Aliases must be at least 4 characters in length aliases of 3 character and less are reserved');
     }
-    crypto.randomBytes(8, (err, buf) => {
-      if (err) return reject(err);
-      models.alias
-        .create({
-          alias: data.alias.toLowerCase(),
-          address: data.address,
-          email: data.email,
-          token: buf.toString('hex'),
-          listed: data.listed
-        })
-        .then((alias) => {
-          alias.dataValues.aliasSeed = jwt.sign(alias.dataValues.token, config.privateKey);
-          alias.dataValues.avatar = jdenticon.toSvg(alias.dataValues.token, 64);
-          delete alias.dataValues.token;
-          resolve(alias.dataValues);
-        })
-        .catch((err) => {
-          reject(err);
-        });
-    });
+    methods
+      .find(data.alias)
+      .then((alias) => {
+        return reject(`${data.alias} has already been taken!`);
+      })
+      .catch((err) => {
+        if (err === 'Could not find alias') {
+          data.email = encryptEmail(data.email);
+          data.alias = data.alias.toLowerCase();
+          if (data.listed === false) {
+            data.alias = crypto.createHmac('sha256', config.privateKey).update(data.alias).digest('hex');
+          }
+          crypto.randomBytes(8, (err, buf) => {
+            if (err) return reject(err);
+            models.alias
+              .create({
+                alias: data.alias.toLowerCase(),
+                address: data.address,
+                email: data.email,
+                token: buf.toString('hex'),
+                listed: data.listed
+              })
+              .then((alias) => {
+                alias.dataValues.aliasSeed = jwt.sign(alias.dataValues.token, config.privateKey);
+                alias.dataValues.avatar = jdenticon.toSvg(alias.dataValues.token, 64);
+                delete alias.dataValues.token;
+                resolve(alias.dataValues);
+              })
+              .catch((err) => {
+                reject(err);
+              });
+          });
+        }
+      });
   });
 };
 
@@ -108,7 +135,14 @@ methods.delete = (data) => {
       models.alias
         .destroy({
           where: {
-            alias: data.alias.toLowerCase(),
+            $or: [
+              {
+                alias: data.alias.toLowerCase()
+              },
+              {
+                alias: crypto.createHmac('sha256', config.privateKey).update(data.alias.toLowerCase()).digest('hex')
+              }
+            ],
             token: token
           }
         })
@@ -155,7 +189,14 @@ methods.edit = (data) => {
       models.alias
         .findOne({
           where: {
-            alias: data.alias.toLowerCase(),
+            $or: [
+              {
+                alias: data.alias.toLowerCase()
+              },
+              {
+                alias: crypto.createHmac('sha256', config.privateKey).update(data.alias.toLowerCase()).digest('hex')
+              }
+            ],
             token: token
           }
         })
@@ -208,7 +249,14 @@ methods.find = (aliasName) => {
     models.alias
       .findOne({
         where: {
-          alias: aliasName.toLowerCase(),
+          $or: [
+            {
+              alias: aliasName.toLowerCase()
+            },
+            {
+              alias: crypto.createHmac('sha256', config.privateKey).update(aliasName.toLowerCase()).digest('hex')
+            }
+          ]
         }
       })
       .then((alias) => {
@@ -239,7 +287,14 @@ methods.getAvatar = (data) => {
     models.alias
       .findOne({
         where: {
-          alias: data.alias.toLowerCase(),
+          $or: [
+            {
+              alias: data.alias.toLowerCase()
+            },
+            {
+              alias: crypto.createHmac('sha256', config.privateKey).update(data.alias.toLowerCase()).digest('hex')
+            }
+          ]
         }
       })
       .then((alias) => {
