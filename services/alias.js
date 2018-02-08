@@ -9,6 +9,7 @@ const letterRegex = XRegExp('^\\p{L}+$');
 const numberRegex = /^(\+[0-9]{1,3}|0)[0-9]{3}( ){0,1}[0-9]{7,8}\b/;
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const jdenticon = require("jdenticon");
 const config = require('../config.json');
 let methods = {};
 
@@ -64,6 +65,7 @@ methods.create = (data) => {
         })
         .then((alias) => {
           alias.dataValues.aliasSeed = jwt.sign(alias.dataValues.token, config.privateKey);
+          alias.dataValues.avatar = jdenticon.toSvg(alias.dataValues.token, 64);
           delete alias.dataValues.token;
           resolve(alias.dataValues);
         })
@@ -175,6 +177,7 @@ methods.edit = (data) => {
             alias.save()
             .then((updatedAlias) => {
               updatedAlias.dataValues.aliasSeed = jwt.sign(updatedAlias.dataValues.token, config.privateKey);
+              updatedAlias.avatar = jdenticon.toSvg(updatedAlias.dataValues.token, 64);
               delete updatedAlias.dataValues.token;
               resolve(updatedAlias.dataValues);
             })
@@ -203,6 +206,7 @@ methods.find = (aliasName) => {
       .then((alias) => {
         if (!alias) { return reject('Could not find alias'); }
         let result = alias.dataValues;
+        result.avatar = jdenticon.toSvg(result.token, 64);
         delete result.email;
         delete result.token;
         resolve(result);
@@ -231,6 +235,7 @@ methods.findAll = (page) => {
         let results = [];
         aliases.forEach((alias) => {
           let result = alias.dataValues;
+          result.avatar = jdenticon.toSvg(result.token, 64);
           delete result.email;
           delete result.token;
           results.push(result);
