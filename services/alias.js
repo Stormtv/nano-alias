@@ -106,6 +106,8 @@ methods.create = (data) => {
                 reject(err);
               });
           });
+        } else {
+          reject(err);
         }
       });
   });
