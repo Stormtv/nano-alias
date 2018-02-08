@@ -27,6 +27,30 @@ router.post('/create', (req, res) => {
     });
 });
 
+router.post('/avatar', (req, res) => {
+  Alias
+    .getAvatar(req.body)
+    .then((avatar) => {
+      res
+        .status(200)
+        .json({
+          'status': 'SUCCESS',
+          'message': 'Successfully found the avatar of the alias',
+          'data': {
+            'avatar': avatar
+          }
+        });
+    })
+    .catch((err) => {
+      res
+        .status(422)
+        .json({
+          'status': 'ERROR',
+          'message': err
+        });
+    });
+});
+
 router.get('/:alias', (req, res) => {
   Alias
     .find(req.params.alias)

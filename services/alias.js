@@ -9,7 +9,8 @@ const letterRegex = XRegExp('^\\p{L}+$');
 const numberRegex = /^(\+[0-9]{1,3}|0)[0-9]{3}( ){0,1}[0-9]{7,8}\b/;
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const jdenticon = require("jdenticon");
+const jdenticon = require('jdenticon');
+const Datauri = require('datauri');
 const config = require('../config.json');
 let methods = {};
 
@@ -210,6 +211,40 @@ methods.find = (aliasName) => {
         delete result.email;
         delete result.token;
         resolve(result);
+      })
+      .catch((err) => { reject(err); });
+  });
+};
+
+methods.getAvatar = (data) => {
+  return new Promise((resolve, reject) => {
+    if (!data.alias) {
+      return reject('No alias was provided');
+    }
+    let size = 64
+    if (data.size) {
+      size = data.size;
+    }
+    let svg = true
+    if (data.type && data.type === "png") {
+      svg = false;
+    }
+    models.alias
+      .findOne({
+        where: {
+          alias: data.alias.toLowerCase(),
+        }
+      })
+      .then((alias) => {
+        if (!alias) { return reject('Could not find alias'); }
+        if (svg === true) {
+          resolve(jdenticon.toSvg(alias.dataValues.token, data.size));
+        } else {
+          let buffer = jdenticon.toPng(alias.dataValues.token, parseInt(data.size));
+          const datauri = new Datauri();
+          datauri.format('.png', buffer);
+          resolve(datauri.base64);
+        }
       })
       .catch((err) => { reject(err); });
   });

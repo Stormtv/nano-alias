@@ -17,6 +17,7 @@
   },
   "homepage": "",
   "dependencies": {
+    "datauri": "^1.0.5",
     "express": "^4.16.2",
     "jdenticon": "^1.8.0",
     "pg": "^6.4.2",
