@@ -21,6 +21,10 @@ module.exports = (sequelize, DataTypes) => {
     listed: {
       type: DataTypes.BOOLEAN,
       defaultValue: false
+    },
+    verified: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
     }
   }, {
     freezeTableName: true,
