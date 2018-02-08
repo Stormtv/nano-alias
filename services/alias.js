@@ -89,7 +89,7 @@ methods.create = (data) => {
                 alias: data.alias.toLowerCase(),
                 address: data.address,
                 email: data.email,
-                token: buf.toString('hex'),
+                token: crypto.createHmac('sha256', config.privateKey).update(buf.toString('hex')).digest('hex'),
                 listed: data.listed
               })
               .then((alias) => {
@@ -220,7 +220,7 @@ methods.edit = (data) => {
           }
           crypto.randomBytes(8, (err, buf) => {
             if (err) return reject(err);
-            alias.token = buf.toString('hex');
+            alias.token = crypto.createHmac('sha256', config.privateKey).update(buf.toString('hex')).digest('hex');
             //Everytime your account is editied you must reapply for manual verification
             alias.verified = false;
             alias.save()
