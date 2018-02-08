@@ -20,6 +20,7 @@ methods.find = (address) => {
         aliases.forEach((alias) => {
           let result = alias.dataValues;
           delete result.email;
+          delete result.token;
           results.push(result);
         });
         resolve(results);

@@ -1,8 +1,14 @@
 module.exports = (sequelize, DataTypes) => {
   const Alias = sequelize.define('alias', {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true
+    },
     alias: {
       type: DataTypes.STRING,
-      primaryKey: true
+      require: true,
+      unique: true
     },
     address: {
       type: DataTypes.STRING,
@@ -25,6 +31,10 @@ module.exports = (sequelize, DataTypes) => {
     verified: {
       type: DataTypes.BOOLEAN,
       defaultValue: false
+    },
+    token: {
+      type: DataTypes.STRING,
+      require: true
     }
   }, {
     freezeTableName: true,
