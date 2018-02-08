@@ -170,6 +170,8 @@ methods.edit = (data) => {
           crypto.randomBytes(8, (err, buf) => {
             if (err) return reject(err);
             alias.token = buf.toString('hex');
+            //Everytime your account is editied you must reapply for manual verification
+            alias.verified = false;
             alias.save()
             .then((updatedAlias) => {
               updatedAlias.dataValues.aliasSeed = jwt.sign(updatedAlias.dataValues.token, config.privateKey);
