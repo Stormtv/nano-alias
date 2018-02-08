@@ -55,6 +55,7 @@ methods.create = (data) => {
     if (typeof data.alias !== 'string') {
       return reject('Invalid alias provided');
     }
+    data.registered = true;
     if (!letterRegex.test(data.alias.charAt(0))) {
       //Not a valid alias is this a valid phone number?
       if (!numberRegex.test(data.alias)) {
@@ -62,7 +63,9 @@ methods.create = (data) => {
         return reject('Invalid alias format: must be E164 phone number or must start with a Unicode Letter');
       } else {
         //Valid phone number - Never List Phone Numbers
+        data.registered = false;
         data.listed = false;
+        //TODO BRAINBLOCKS PAYMENT TWILIO
       }
     } else if (!lnRegex.test(data.alias)) {
       return reject('Invalid alias format: must start with a Unicode Letter & only container unicode letters or symbols');
@@ -90,7 +93,8 @@ methods.create = (data) => {
                 address: data.address,
                 email: data.email,
                 token: crypto.createHmac('sha256', config.privateKey).update(buf.toString('hex')).digest('hex'),
-                listed: data.listed
+                listed: data.listed,
+                registered: data.registered
               })
               .then((alias) => {
                 alias.dataValues.aliasSeed = jwt.sign(alias.dataValues.token, config.privateKey);
@@ -215,8 +219,12 @@ methods.edit = (data) => {
             && data.newAlias.length >= 4) {
               if (numberRegex.test(data.newAlias)) {
                 alias.listed = false;
+                alias.registered = false;
+                //TODO BRAINBLOCKS SEND TEXT MESSAGE
               }
-              alias.alias = data.newAlias;
+              if (alias.listed === false) {
+                alias.alias = crypto.createHmac('sha256', config.privateKey).update(data.newAlias).digest('hex');
+              }
           }
           crypto.randomBytes(8, (err, buf) => {
             if (err) return reject(err);
@@ -261,6 +269,17 @@ methods.find = (aliasName) => {
       })
       .then((alias) => {
         if (!alias) { return reject('Could not find alias'); }
+        if (alias.dataValues.registered === false) {
+          if (moment().diff(moment(alias.dataValues.updatedAt), "minutes") >= 10) {
+            alias.destroy()
+              .then(() => {
+                return reject('Could not find alias');
+              })
+              .catch((err) => { reject(err); });
+          } else {
+            return reject(`${alias.dataValues.alias} is still pending registration for ${10 - moment().diff(moment(alias.dataValues.updatedAt), "minutes")} minutes`);
+          }
+        }
         let result = alias.dataValues;
         result.avatar = jdenticon.toSvg(result.token, 64);
         delete result.email;
@@ -294,7 +313,8 @@ methods.getAvatar = (data) => {
             {
               alias: crypto.createHmac('sha256', config.privateKey).update(data.alias.toLowerCase()).digest('hex')
             }
-          ]
+          ],
+          registered: true
         }
       })
       .then((alias) => {
@@ -323,7 +343,8 @@ methods.findAll = (page) => {
           offset:page*10,
           limit:10,
           where: {
-            listed:true
+            listed:true,
+            registered:true
           }
         }
       )

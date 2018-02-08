@@ -32,6 +32,11 @@ module.exports = (sequelize, DataTypes) => {
     token: {
       type: DataTypes.STRING,
       require: true
+    },
+    registered: {
+      type: DataTypes.BOOLEAN,
+      require: true,
+      defaultValue: false
     }
   }, {
     freezeTableName: true,
