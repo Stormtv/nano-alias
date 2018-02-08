@@ -5,7 +5,8 @@ const xrbRegex = /(xrb_[13][a-km-zA-HJ-NP-Z0-9]{59})/g;
   ensure it is a letter regardless of language.
 */
 const XRegExp = require('xregexp');
-const letterRegex = XRegExp('^\\p{L}+$');
+const letterRegex = XRegExp('^\\pL+$');
+const lnRegex = XRegExp('^(\\pL|\\pN)+$');
 const numberRegex = /^(\+[0-9]{1,3}|0)[0-9]{3}( ){0,1}[0-9]{7,8}\b/;
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
@@ -50,6 +51,8 @@ methods.create = (data) => {
         //Valid phone number - Never List Phone Numbers
         data.listed = false;
       }
+    } else if (!lnRegex.test(data.alias)) {
+      return reject('Invalid alias format: must start with a Unicode Letter & only container unicode letters or symbols');
     }
     if (data.alias.length < 4) {
       return reject('Aliases must be at least 4 characters in length aliases of 3 character and less are reserved');
@@ -91,6 +94,8 @@ methods.delete = (data) => {
         //Not a valid phone alias
         return reject('Invalid alias format: must be E164 phone number or must start with a Unicode Letter');
       }
+    } else if (!lnRegex.test(data.alias)) {
+      return reject('Invalid alias format: must start with a Unicode Letter & only container unicode letters or symbols');
     }
     if (!data.aliasSeed) {
       return reject('No seed provided');
@@ -135,6 +140,8 @@ methods.edit = (data) => {
         //Not a valid phone alias
         return reject('Invalid alias format: must be E164 phone number or must start with a Unicode Letter');
       }
+    } else if (!lnRegex.test(data.alias)) {
+      return reject('Invalid alias format: must start with a Unicode Letter & only container unicode letters or symbols');
     }
     if (!data.aliasSeed) {
       return reject('No seed provided');
