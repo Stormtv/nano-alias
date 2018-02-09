@@ -81,6 +81,7 @@ methods.create = (data) => {
       .catch((err) => {
         if (err === 'Could not find alias') {
           data.email = encryptEmail(data.email);
+          let currentAlias = data.alias.toLowerCase();
           data.alias = data.alias.toLowerCase();
           if (data.listed === false) {
             data.alias = crypto.createHmac('sha256', config.privateKey).update(data.alias).digest('hex');
@@ -99,7 +100,9 @@ methods.create = (data) => {
               .then((alias) => {
                 alias.dataValues.aliasSeed = jwt.sign(alias.dataValues.token, config.privateKey);
                 alias.dataValues.avatar = jdenticon.toSvg(alias.dataValues.token, 64);
+                alias.dataValues.alias = currentAlias;
                 delete alias.dataValues.token;
+                delete alias.dataValues.email;
                 resolve(alias.dataValues);
               })
               .catch((err) => {
@@ -216,8 +219,9 @@ methods.edit = (data) => {
           if (data.listed !== null && typeof data.listed === 'string' && (data.listed === "true" || data.listed === "false")) {
             alias.listed = data.listed;
           }
+          alias.registered = true;
           if (data.newAlias !== null && typeof data.newAlias === 'string'
-            && (letterRegex.test(data.newAlias.charAt(0)) || numberRegex.test(data.newAlias))
+            && ((letterRegex.test(data.newAlias.charAt(0)) && lnRegex.test(data.newAlias)) || numberRegex.test(data.newAlias))
             && data.newAlias.length >= 4) {
               if (numberRegex.test(data.newAlias)) {
                 alias.listed = false;
@@ -235,9 +239,11 @@ methods.edit = (data) => {
             alias.verified = false;
             alias.save()
             .then((updatedAlias) => {
+              updatedAlias.dataValues.alias = data.newAlias;
               updatedAlias.dataValues.aliasSeed = jwt.sign(updatedAlias.dataValues.token, config.privateKey);
               updatedAlias.dataValues.avatar = jdenticon.toSvg(updatedAlias.dataValues.token, 64);
               delete updatedAlias.dataValues.token;
+              delete updatedAlias.dataValues.email;
               resolve(updatedAlias.dataValues);
             })
           });
@@ -283,6 +289,7 @@ methods.find = (aliasName) => {
           }
         }
         let result = alias.dataValues;
+        result.alias = aliasName.toLowerCase();
         result.avatar = jdenticon.toSvg(result.token, 64);
         delete result.email;
         delete result.token;
