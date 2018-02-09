@@ -214,7 +214,7 @@ methods.edit = (data) => {
             alias.address = data.address;
           }
           if (data.email !== null && typeof data.email === 'string') {
-            alias.email = data.email;
+            alias.email = encryptEmail(data.email);
           }
           if (data.listed !== null && typeof data.listed === 'string' && (data.listed === "true" || data.listed === "false")) {
             alias.listed = data.listed;
