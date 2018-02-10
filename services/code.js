@@ -5,13 +5,13 @@ let methods = {};
 methods.create = (data) => {
   return new Promise((resolve, reject) => {
     if (!data.id) {
-      return reject('No id provided');
+      reject('No id provided');
     }
     if (typeof data.id !== 'string' && typeof data.id !== 'number') {
-      return reject('Invalid id provided');
+      reject('Invalid id provided');
     }
     if (!data.code) {
-      return reject('No code provided');
+      reject('No code provided');
     }
     models.code
       .create({
