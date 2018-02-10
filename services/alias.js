@@ -13,9 +13,13 @@ const crypto = require('crypto');
 const jdenticon = require('jdenticon');
 const Datauri = require('datauri');
 const config = require('../config.json');
+const twilio = require('twilio');
+const moment = require('moment');
+const CodeService = require('./code');
+let client = new twilio(config.twilioSID, config.twilioAuthToken);
 let methods = {};
 
-let encryptEmail = (data) => {
+const encryptEmail = (data) => {
   if (data) {
     var cipher = crypto.createCipher('aes-256-cbc', config.privateKey);
     var crypted = cipher.update(data, 'utf-8', 'hex');
@@ -24,6 +28,17 @@ let encryptEmail = (data) => {
   } else {
     return "";
   }
+};
+
+const random = (howMany, chars) => {
+  chars = chars || "0123456789";
+  let rnd = crypto.randomBytes(howMany),
+    value = new Array(howMany),
+    len = chars.length;
+  for (let i = 0; i < howMany; i++) {
+    value[i] = chars[rnd[i] % len];
+  }
+  return value.join('');
 };
 
 methods.create = (data) => {
@@ -65,7 +80,6 @@ methods.create = (data) => {
         //Valid phone number - Never List Phone Numbers
         data.registered = false;
         data.listed = false;
-        //TODO BRAINBLOCKS PAYMENT TWILIO
       }
     } else if (!lnRegex.test(data.alias)) {
       return reject('Invalid alias format: must start with a Unicode Letter & only container unicode letters or symbols');
@@ -98,12 +112,50 @@ methods.create = (data) => {
                 registered: data.registered
               })
               .then((alias) => {
-                alias.dataValues.aliasSeed = jwt.sign(alias.dataValues.token, config.privateKey);
-                alias.dataValues.avatar = jdenticon.toSvg(alias.dataValues.token, 64);
-                alias.dataValues.alias = currentAlias;
-                delete alias.dataValues.token;
-                delete alias.dataValues.email;
-                resolve(alias.dataValues);
+                if (alias.dataValues.registered === false) {
+                  let code = random(6);
+                  CodeService.create({
+                    id: alias.dataValues.id,
+                    code: code
+                  })
+                  .then((code) => {
+                    if (config.twilioEnabled) {
+                      client.messages.create({
+                          body: `Nano Alias: ${code.dataValues.code} is your SMS verification code.`,
+                          to: currentAlias,
+                          from: config.twilioPhoneNumber
+                      })
+                      .then((message) => {
+                        alias.dataValues.aliasSeed = jwt.sign(alias.dataValues.token, config.privateKey);
+                        alias.dataValues.avatar = jdenticon.toSvg(alias.dataValues.token, 64);
+                        alias.dataValues.alias = currentAlias;
+                        delete alias.dataValues.token;
+                        delete alias.dataValues.email;
+                        return resolve(alias.dataValues);
+                      })
+                      .catch((err) => {
+                        reject(err);
+                      });
+                    } else {
+                      alias.dataValues.aliasSeed = jwt.sign(alias.dataValues.token, config.privateKey);
+                      alias.dataValues.avatar = jdenticon.toSvg(alias.dataValues.token, 64);
+                      alias.dataValues.alias = currentAlias;
+                      delete alias.dataValues.token;
+                      delete alias.dataValues.email;
+                      resolve(alias.dataValues);
+                    }
+                  })
+                  .catch((err) => {
+                    reject(err);
+                  });
+                } else {
+                  alias.dataValues.aliasSeed = jwt.sign(alias.dataValues.token, config.privateKey);
+                  alias.dataValues.avatar = jdenticon.toSvg(alias.dataValues.token, 64);
+                  alias.dataValues.alias = currentAlias;
+                  delete alias.dataValues.token;
+                  delete alias.dataValues.email;
+                  resolve(alias.dataValues);
+                }
               })
               .catch((err) => {
                 reject(err);
@@ -226,10 +278,11 @@ methods.edit = (data) => {
               if (numberRegex.test(data.newAlias)) {
                 alias.listed = false;
                 alias.registered = false;
-                //TODO BRAINBLOCKS SEND TEXT MESSAGE
               }
               if (alias.listed === false) {
                 alias.alias = crypto.createHmac('sha256', config.privateKey).update(data.newAlias).digest('hex');
+              } else {
+                alias.alias = data.newAlias;
               }
           }
           crypto.randomBytes(8, (err, buf) => {
@@ -244,8 +297,9 @@ methods.edit = (data) => {
               updatedAlias.dataValues.avatar = jdenticon.toSvg(updatedAlias.dataValues.token, 64);
               delete updatedAlias.dataValues.token;
               delete updatedAlias.dataValues.email;
-              resolve(updatedAlias.dataValues);
+              return resolve(updatedAlias.dataValues);
             })
+            .catch((err) => { return reject(err); });
           });
         })
         .catch((err) => {
@@ -279,13 +333,13 @@ methods.find = (aliasName) => {
         if (!alias) { return reject('Could not find alias'); }
         if (alias.dataValues.registered === false) {
           if (moment().diff(moment(alias.dataValues.updatedAt), "minutes") >= 10) {
-            alias.destroy()
+            return alias.destroy()
               .then(() => {
                 return reject('Could not find alias');
               })
               .catch((err) => { reject(err); });
           } else {
-            return reject(`${alias.dataValues.alias} is still pending registration for ${10 - moment().diff(moment(alias.dataValues.updatedAt), "minutes")} minutes`);
+            return reject(`${aliasName.toLowerCase()} is still pending registration for ${10 - moment().diff(moment(alias.dataValues.updatedAt), "minutes")} minutes`);
           }
         }
         let result = alias.dataValues;
@@ -370,6 +424,69 @@ methods.findAll = (page) => {
         resolve(results);
       })
       .catch((err) => { reject(err); });
+  });
+};
+
+methods.register = (data) => {
+  return new Promise((resolve, reject) => {
+    if (!data.alias) {
+      return reject('No alias provided');
+    }
+    if (!data.verifyCode) {
+      return reject('No verification code was provided');
+    }
+    models.alias
+      .findOne({
+        include: [{
+          model: models.code,
+          as: 'codes',
+          where: {
+            '$codes.code$': data.verifyCode
+          }
+        }],
+        where: {
+          $or: [
+            {
+              alias: data.alias.toLowerCase()
+            },
+            {
+              alias: crypto.createHmac('sha256', config.privateKey).update(data.alias.toLowerCase()).digest('hex')
+            }
+          ]
+        }
+      })
+      .then((alias) => {
+        if (!alias) { return reject('Could not find an alias with provided alias and verfication code'); }
+        if (alias.codes.length > 0 && moment().diff(moment(alias.codes[0].createdAt), "minutes") < 10) {
+          return alias.codes[0].destroy()
+            .then((destroyedCode) => {
+              //SUCCESSFULLY VERIFIED
+              alias.registered = true;
+              delete alias.codes;
+              return alias.save()
+              .then((updatedAlias) => {
+                updatedAlias.dataValues.alias = data.alias;
+                updatedAlias.dataValues.aliasSeed = jwt.sign(updatedAlias.dataValues.token, config.privateKey);
+                updatedAlias.dataValues.avatar = jdenticon.toSvg(updatedAlias.dataValues.token, 64);
+                delete updatedAlias.dataValues.token;
+                delete updatedAlias.dataValues.email;
+                return resolve(updatedAlias.dataValues);
+              })
+              .catch((err) => { reject(err); });
+            })
+            .catch((err) => { reject(err); });
+        } else {
+          if (alias.codes.length > 0) {
+            return alias.codes[0].destroy()
+              .then((destroyedCode) => {
+                delete alias.dataValues.codes;
+                return reject(`The verification code has expired for ${data.alias}`);
+              })
+              .catch((err) => { return reject(err); });
+          }
+        }
+      })
+      .catch((err) => { return reject(err); });
   });
 };
 

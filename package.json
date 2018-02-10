@@ -17,12 +17,15 @@
   },
   "homepage": "",
   "dependencies": {
+    "colog": "^1.0.4",
     "datauri": "^1.0.5",
     "express": "^4.16.2",
     "jdenticon": "^1.8.0",
+    "moment": "^2.20.1",
     "pg": "^6.4.2",
     "pg-hstore": "^2.3.2",
     "sequelize": "^4.27.0",
+    "twilio": "^3.11.2",
     "xregexp": "^4.0.0"
   }
 }

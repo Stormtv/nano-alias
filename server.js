@@ -3,6 +3,8 @@ const express = require('express');
 const config = require('./config.json');
 const app = express();
 const bodyParser = require('body-parser');
+const colog = require('colog');
+const moment = require('moment');
 const models = require('./models');
 
 // Application config
@@ -13,6 +15,16 @@ app.use(bodyParser.urlencoded({ extended: true }));
 const alias = require('./routes/alias');
 const request = require('./routes/request');
 const address = require('./routes/address');
+
+//Debug Logging
+app.use(function (req, res, next) {
+  if (config.debug) {
+    colog.log(colog.color(moment().format('YYYY-MM-DD HH:mm:ss') + ' - ','cyan') +
+              colog.color(req.headers['x-forwarded-for'] || req.connection.remoteAddress,'cyan')+
+              ' - '+colog.inverse(req.method)+' - '+colog.bold(req.url));
+  }
+  next();
+});
 
 // Set routes
 app.use('/alias', alias);
@@ -36,6 +48,7 @@ app.get('/reset', (req, res) => {
       });
   }
 });
+models.alias.hasMany(models.code);
 models.sequelize.sync().then(function () {
   app.listen(config.system.port);
 });
