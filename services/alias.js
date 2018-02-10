@@ -13,9 +13,13 @@ const crypto = require('crypto');
 const jdenticon = require('jdenticon');
 const Datauri = require('datauri');
 const config = require('../config.json');
+const twilio = require('twilio');
+const moment = require('moment');
+const CodeService = require('./code');
+let client = new twilio(config.twilioSID, config.twilioAuthToken);
 let methods = {};
 
-let encryptEmail = (data) => {
+const encryptEmail = (data) => {
   if (data) {
     var cipher = crypto.createCipher('aes-256-cbc', config.privateKey);
     var crypted = cipher.update(data, 'utf-8', 'hex');
@@ -26,82 +30,139 @@ let encryptEmail = (data) => {
   }
 };
 
+const random = (howMany, chars) => {
+  chars = chars || "0123456789";
+  let rnd = crypto.randomBytes(howMany),
+    value = new Array(howMany),
+    len = chars.length;
+  for (let i = 0; i < howMany; i++) {
+    value[i] = chars[rnd[i] % len];
+  }
+  return value.join('');
+};
+
 methods.create = (data) => {
   return new Promise((resolve, reject) => {
     if (!data.address) {
-      return reject('No address provided');
+      reject('No address provided');
     }
     if (typeof data.address !== 'string' && xrbRegex.test(data.address)) {
-      return reject('Invalid address provided');
+      reject('Invalid address provided');
     }
     if (!data.email) {
-      return reject('No email provided');
+      reject('No email provided');
     }
     if (typeof data.email !== 'string') {
-      return reject('Invalid email provided');
+      reject('Invalid email provided');
     }
     if (!data.listed) {
       data.listed = false;
     }
     if (data.listed && typeof data.listed === 'string' &&
       !(data.listed === "true" || data.listed === "false")) {
-      return reject('Invalid listed provided');
+      reject('Invalid listed provided');
     } else {
       data.listed = data.listed == 'true';
     }
     if (!data.alias) {
-      return reject('No alias provided');
+      reject('No alias provided');
     }
     if (typeof data.alias !== 'string') {
-      return reject('Invalid alias provided');
+      reject('Invalid alias provided');
     }
+    data.registered = true;
     if (!letterRegex.test(data.alias.charAt(0))) {
       //Not a valid alias is this a valid phone number?
       if (!numberRegex.test(data.alias)) {
         //Not a valid phone alias
-        return reject('Invalid alias format: must be E164 phone number or must start with a Unicode Letter');
+        reject('Invalid alias format: must be E164 phone number or must start with a Unicode Letter');
       } else {
         //Valid phone number - Never List Phone Numbers
+        data.registered = false;
         data.listed = false;
       }
     } else if (!lnRegex.test(data.alias)) {
-      return reject('Invalid alias format: must start with a Unicode Letter & only container unicode letters or symbols');
+      reject('Invalid alias format: must start with a Unicode Letter & only container unicode letters or symbols');
     }
     if (data.alias.length < 4) {
-      return reject('Aliases must be at least 4 characters in length aliases of 3 character and less are reserved');
+      reject('Aliases must be at least 4 characters in length aliases of 3 character and less are reserved');
     }
     methods
       .find(data.alias)
       .then((alias) => {
-        return reject(`${data.alias} has already been taken!`);
+        reject(`${data.alias} has already been taken!`);
       })
       .catch((err) => {
         if (err === 'Could not find alias') {
           data.email = encryptEmail(data.email);
+          let currentAlias = data.alias.toLowerCase();
           data.alias = data.alias.toLowerCase();
           if (data.listed === false) {
             data.alias = crypto.createHmac('sha256', config.privateKey).update(data.alias).digest('hex');
           }
           crypto.randomBytes(8, (err, buf) => {
-            if (err) return reject(err);
+            if (err) reject(err);
             models.alias
               .create({
                 alias: data.alias.toLowerCase(),
                 address: data.address,
                 email: data.email,
                 token: crypto.createHmac('sha256', config.privateKey).update(buf.toString('hex')).digest('hex'),
-                listed: data.listed
+                listed: data.listed,
+                registered: data.registered
               })
               .then((alias) => {
-                alias.dataValues.aliasSeed = jwt.sign(alias.dataValues.token, config.privateKey);
-                alias.dataValues.avatar = jdenticon.toSvg(alias.dataValues.token, 64);
-                delete alias.dataValues.token;
-                resolve(alias.dataValues);
+                if (alias.dataValues.registered === false) {
+                  let code = random(6);
+                  return CodeService.create({
+                    id: alias.dataValues.id,
+                    code: code
+                  })
+                  .then((code) => {
+                    if (config.twilioEnabled) {
+                      client.messages.create({
+                          body: `Nano Alias: ${code.dataValues.code} is your SMS verification code.`,
+                          to: currentAlias,
+                          from: config.twilioPhoneNumber
+                      })
+                      .then((message) => {
+                        alias.dataValues.aliasSeed = jwt.sign(alias.dataValues.token, config.privateKey);
+                        alias.dataValues.avatar = jdenticon.toSvg(alias.dataValues.token, 64);
+                        alias.dataValues.alias = currentAlias;
+                        delete alias.dataValues.token;
+                        delete alias.dataValues.email;
+                        resolve(alias.dataValues);
+                      })
+                      .catch((err) => {
+                        reject(err);
+                      });
+                    } else {
+                      alias.dataValues.aliasSeed = jwt.sign(alias.dataValues.token, config.privateKey);
+                      alias.dataValues.avatar = jdenticon.toSvg(alias.dataValues.token, 64);
+                      alias.dataValues.alias = currentAlias;
+                      delete alias.dataValues.token;
+                      delete alias.dataValues.email;
+                      resolve(alias.dataValues);
+                    }
+                  })
+                  .catch((err) => {
+                    reject(err);
+                  });
+                } else {
+                  alias.dataValues.aliasSeed = jwt.sign(alias.dataValues.token, config.privateKey);
+                  alias.dataValues.avatar = jdenticon.toSvg(alias.dataValues.token, 64);
+                  alias.dataValues.alias = currentAlias;
+                  delete alias.dataValues.token;
+                  delete alias.dataValues.email;
+                  resolve(alias.dataValues);
+                }
               })
               .catch((err) => {
                 reject(err);
               });
           });
+        } else {
+          reject(err);
         }
       });
   });
@@ -110,25 +171,25 @@ methods.create = (data) => {
 methods.delete = (data) => {
   return new Promise((resolve, reject) => {
     if (!data.alias) {
-      return reject('No alias provided');
+      reject('No alias provided');
     }
     if (typeof data.alias !== 'string') {
-      return reject('Invalid alias provided');
+      reject('Invalid alias provided');
     }
     if (!letterRegex.test(data.alias.charAt(0))) {
       //Not a valid alias is this a valid phone number?
       if (!numberRegex.test(data.alias)) {
         //Not a valid phone alias
-        return reject('Invalid alias format: must be E164 phone number or must start with a Unicode Letter');
+        reject('Invalid alias format: must be E164 phone number or must start with a Unicode Letter');
       }
     } else if (!lnRegex.test(data.alias)) {
-      return reject('Invalid alias format: must start with a Unicode Letter & only container unicode letters or symbols');
+      reject('Invalid alias format: must start with a Unicode Letter & only container unicode letters or symbols');
     }
     if (!data.aliasSeed) {
-      return reject('No seed provided');
+      reject('No seed provided');
     }
     if (typeof data.aliasSeed !== 'string') {
-      return reject('Invalid seed provided');
+      reject('Invalid seed provided');
     }
     try {
       let token = jwt.verify(data.aliasSeed, config.privateKey);
@@ -153,7 +214,7 @@ methods.delete = (data) => {
           reject(err);
         });
     } catch(err) {
-      return reject('Invalid Alias Seed');
+      reject('Invalid Alias Seed');
     }
   });
 };
@@ -163,25 +224,25 @@ methods.edit = (data) => {
 
     //Validate Proper Credentials to initate the edit.
     if (!data.alias) {
-      return reject('No alias provided');
+      reject('No alias provided');
     }
     if (typeof data.alias !== 'string') {
-      return reject('Invalid alias provided');
+      reject('Invalid alias provided');
     }
     if (!letterRegex.test(data.alias.charAt(0))) {
       //Not a valid alias is this a valid phone number?
       if (!numberRegex.test(data.alias)) {
         //Not a valid phone alias
-        return reject('Invalid alias format: must be E164 phone number or must start with a Unicode Letter');
+        reject('Invalid alias format: must be E164 phone number or must start with a Unicode Letter');
       }
     } else if (!lnRegex.test(data.alias)) {
-      return reject('Invalid alias format: must start with a Unicode Letter & only container unicode letters or symbols');
+      reject('Invalid alias format: must start with a Unicode Letter & only container unicode letters or symbols');
     }
     if (!data.aliasSeed) {
-      return reject('No seed provided');
+      reject('No seed provided');
     }
     if (typeof data.aliasSeed !== 'string') {
-      return reject('Invalid seed provided');
+      reject('Invalid seed provided');
     }
 
     try {
@@ -205,38 +266,47 @@ methods.edit = (data) => {
             alias.address = data.address;
           }
           if (data.email !== null && typeof data.email === 'string') {
-            alias.email = data.email;
+            alias.email = encryptEmail(data.email);
           }
           if (data.listed !== null && typeof data.listed === 'string' && (data.listed === "true" || data.listed === "false")) {
             alias.listed = data.listed;
           }
+          alias.registered = true;
           if (data.newAlias !== null && typeof data.newAlias === 'string'
-            && (letterRegex.test(data.newAlias.charAt(0)) || numberRegex.test(data.newAlias))
+            && ((letterRegex.test(data.newAlias.charAt(0)) && lnRegex.test(data.newAlias)) || numberRegex.test(data.newAlias))
             && data.newAlias.length >= 4) {
               if (numberRegex.test(data.newAlias)) {
                 alias.listed = false;
+                alias.registered = false;
               }
-              alias.alias = data.newAlias;
+              if (alias.listed === false) {
+                alias.alias = crypto.createHmac('sha256', config.privateKey).update(data.newAlias).digest('hex');
+              } else {
+                alias.alias = data.newAlias;
+              }
           }
           crypto.randomBytes(8, (err, buf) => {
-            if (err) return reject(err);
+            if (err) reject(err);
             alias.token = crypto.createHmac('sha256', config.privateKey).update(buf.toString('hex')).digest('hex');
             //Everytime your account is editied you must reapply for manual verification
             alias.verified = false;
             alias.save()
             .then((updatedAlias) => {
+              updatedAlias.dataValues.alias = data.newAlias;
               updatedAlias.dataValues.aliasSeed = jwt.sign(updatedAlias.dataValues.token, config.privateKey);
               updatedAlias.dataValues.avatar = jdenticon.toSvg(updatedAlias.dataValues.token, 64);
               delete updatedAlias.dataValues.token;
+              delete updatedAlias.dataValues.email;
               resolve(updatedAlias.dataValues);
             })
+            .catch((err) => { reject(err); });
           });
         })
         .catch((err) => {
           reject(err);
         });
     } catch(err) {
-      return reject('Invalid Alias Seed');
+      reject('Invalid Alias Seed');
     }
   });
 };
@@ -244,7 +314,7 @@ methods.edit = (data) => {
 methods.find = (aliasName) => {
   return new Promise((resolve, reject) => {
     if (!aliasName) {
-      return reject('No alias was provided');
+      reject('No alias was provided');
     }
     models.alias
       .findOne({
@@ -260,8 +330,20 @@ methods.find = (aliasName) => {
         }
       })
       .then((alias) => {
-        if (!alias) { return reject('Could not find alias'); }
+        if (!alias) { reject('Could not find alias'); }
+        if (alias.dataValues.registered === false) {
+          if (moment().diff(moment(alias.dataValues.updatedAt), "minutes") >= 10) {
+            alias.destroy()
+              .then(() => {
+                reject('Could not find alias');
+              })
+              .catch((err) => { reject(err); });
+          } else {
+            reject(`${aliasName.toLowerCase()} is still pending registration for ${10 - moment().diff(moment(alias.dataValues.updatedAt), "minutes")} minutes`);
+          }
+        }
         let result = alias.dataValues;
+        result.alias = aliasName.toLowerCase();
         result.avatar = jdenticon.toSvg(result.token, 64);
         delete result.email;
         delete result.token;
@@ -274,7 +356,7 @@ methods.find = (aliasName) => {
 methods.getAvatar = (data) => {
   return new Promise((resolve, reject) => {
     if (!data.alias) {
-      return reject('No alias was provided');
+      reject('No alias was provided');
     }
     let size = 64
     if (data.size) {
@@ -294,11 +376,12 @@ methods.getAvatar = (data) => {
             {
               alias: crypto.createHmac('sha256', config.privateKey).update(data.alias.toLowerCase()).digest('hex')
             }
-          ]
+          ],
+          registered: true
         }
       })
       .then((alias) => {
-        if (!alias) { return reject('Could not find alias'); }
+        if (!alias) { reject('Could not find alias'); }
         if (svg === true) {
           resolve(jdenticon.toSvg(alias.dataValues.token, data.size));
         } else {
@@ -323,12 +406,13 @@ methods.findAll = (page) => {
           offset:page*10,
           limit:10,
           where: {
-            listed:true
+            listed:true,
+            registered:true
           }
         }
       )
       .then((aliases) => {
-        if (!aliases) { return reject('Could not get aliases'); }
+        if (!aliases) { reject('Could not get aliases'); }
         let results = [];
         aliases.forEach((alias) => {
           let result = alias.dataValues;
@@ -338,6 +422,70 @@ methods.findAll = (page) => {
           results.push(result);
         });
         resolve(results);
+      })
+      .catch((err) => { reject(err); });
+  });
+};
+
+methods.register = (data) => {
+  return new Promise((resolve, reject) => {
+    if (!data.alias) {
+      reject('No alias provided');
+    }
+    if (!data.verifyCode) {
+      reject('No verification code was provided');
+    }
+    models.alias
+      .findOne({
+        include: [{
+          model: models.code,
+          as: 'codes',
+          where: {
+            '$codes.code$': data.verifyCode
+          }
+        }],
+        where: {
+          $or: [
+            {
+              alias: data.alias.toLowerCase()
+            },
+            {
+              alias: crypto.createHmac('sha256', config.privateKey).update(data.alias.toLowerCase()).digest('hex')
+            }
+          ]
+        }
+      })
+      .then((alias) => {
+        if (!alias) { reject('Could not find an alias with provided alias and verfication code'); }
+        if (alias.codes.length > 0 && moment().diff(moment(alias.codes[0].createdAt), "minutes") < 10) {
+          return alias.codes[0].destroy()
+            .then((destroyedCode) => {
+              //SUCCESSFULLY VERIFIED
+              alias.registered = true;
+              delete alias.codes;
+              return alias.save()
+              .then((updatedAlias) => {
+                updatedAlias.dataValues.alias = data.alias;
+                updatedAlias.dataValues.aliasSeed = jwt.sign(updatedAlias.dataValues.token, config.privateKey);
+                updatedAlias.dataValues.avatar = jdenticon.toSvg(updatedAlias.dataValues.token, 64);
+                delete updatedAlias.dataValues.token;
+                delete updatedAlias.dataValues.codes;
+                delete updatedAlias.dataValues.email;
+                resolve(updatedAlias.dataValues);
+              })
+              .catch((err) => { reject(err); });
+            })
+            .catch((err) => { reject(err); });
+        } else {
+          if (alias.codes.length > 0) {
+            alias.codes[0].destroy()
+              .then((destroyedCode) => {
+                delete alias.dataValues.codes;
+                reject(`The verification code has expired for ${data.alias}`);
+              })
+              .catch((err) => { reject(err); });
+          }
+        }
       })
       .catch((err) => { reject(err); });
   });

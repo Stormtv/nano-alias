@@ -12,7 +12,8 @@ methods.find = (address) => {
       .findAll({
         where: {
           address: address,
-          listed: true
+          listed: true,
+          registered: true
         }
       })
       .then((aliases) => {
