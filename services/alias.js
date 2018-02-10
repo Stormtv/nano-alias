@@ -458,17 +458,18 @@ methods.register = (data) => {
       .then((alias) => {
         if (!alias) { reject('Could not find an alias with provided alias and verfication code'); }
         if (alias.codes.length > 0 && moment().diff(moment(alias.codes[0].createdAt), "minutes") < 10) {
-          alias.codes[0].destroy()
+          return alias.codes[0].destroy()
             .then((destroyedCode) => {
               //SUCCESSFULLY VERIFIED
               alias.registered = true;
               delete alias.codes;
-              alias.save()
+              return alias.save()
               .then((updatedAlias) => {
                 updatedAlias.dataValues.alias = data.alias;
                 updatedAlias.dataValues.aliasSeed = jwt.sign(updatedAlias.dataValues.token, config.privateKey);
                 updatedAlias.dataValues.avatar = jdenticon.toSvg(updatedAlias.dataValues.token, 64);
                 delete updatedAlias.dataValues.token;
+                delete updatedAlias.dataValues.codes;
                 delete updatedAlias.dataValues.email;
                 resolve(updatedAlias.dataValues);
               })

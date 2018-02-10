@@ -78,7 +78,7 @@ router.get('/:alias', (req, res) => {
 router.post('/register', (req, res) => {
   Alias
     .register(req.body)
-    .then((user) => {
+    .then((alias) => {
       res
         .status(200)
         .json({
