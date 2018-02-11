@@ -14,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       require: true,
       validate: {
-        is: /(xrb_[13][a-km-zA-HJ-NP-Z0-9]{59})/,
+        is: /((?:xrb_[13][a-km-zA-HJ-NP-Z0-9]{59})|(?:nano_[13][a-km-zA-HJ-NP-Z0-9]{59}))/,
       }
     },
     email: {

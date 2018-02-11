@@ -1,5 +1,5 @@
 const models = require('../models');
-const xrbRegex = /(xrb_[13][a-km-zA-HJ-NP-Z0-9]{59})/g;
+const xrbRegex = /((?:xrb_[13][a-km-zA-HJ-NP-Z0-9]{59})|(?:nano_[13][a-km-zA-HJ-NP-Z0-9]{59}))/;
 const jdenticon = require("jdenticon");
 let methods = {};
 
