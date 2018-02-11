@@ -16,15 +16,16 @@ export default new Router({
         content: home,
         header: header
       },
-      children: [
-        {
-          path: '/register',
-          name: 'register',
-          components: {
-            content: register
-          }
-        }
-      ]
+      props: { choice: 'home' }
+    },
+    {
+      path: '/register',
+      name: 'register',
+      components: {
+        header: header,
+        content: register
+      },
+      props: { choice: 'register' }
     }
   ]
 })

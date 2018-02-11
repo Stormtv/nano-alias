@@ -19,9 +19,10 @@
 <script>
 export default {
   name: 'header',
-  data() {
+  data(data) {
+    console.log(data);
     return {
-      choice: 'home'
+      choice: data.choice
     }
   },
   methods: {
