@@ -19,13 +19,13 @@ Squatting is one of the primary concerns that everyone has with Nano Alias. When
 When publishing your alias you have an option called listed. Listed means that people will be able to search for your alias using our search API. This can be helpful if you want people to be able to see your alias in a typeahead UI. When marked as unlisted people will only be able to find you if they know your entire alias. All phone number aliases are unlisted and hashed in the database for security reasons. Additionally, we have implemented a feature similar to twitters verification that will allow us to verify aliases that belong to prominent businesses or people.
 
 ##### Editing
-When you create an alias you are given a seed that will allow you to edit your address, email, or event change your alias. Any time you edit or create an alias an avatar is generated. This will act as a visual representation so that everytime you send Nano to an alias the avatar shouldn't have changed and if it has then that means the the user has edited the recieving address and you should be sure it is going to the right location.
+When you create an alias you are given a seed that will allow you to edit your address, email, or event change your alias. Any time you edit or create an alias an avatar is generated. This will act as a visual representation so that everytime you send Nano to an alias the avatar shouldn't have changed and if it has then that means the the user has edited the receiving address and you should be sure it is going to the right location.
 
 ![Example Avatar](https://i.imgur.com/QCaKh4f.png
  "Example Avatar")
 
 # Integrating & Contributing to Nano Alias
-If you are intersted in integrating Nano Alias into your application see our documentation here: [Documentation](https://documenter.getpostman.com/view/2206404/nano-alias/RVfsFYHj)
+If you are interested in integrating Nano Alias into your application see our documentation here: [Documentation](https://documenter.getpostman.com/view/2206404/nano-alias/RVfsFYHj)
 
 If you are interested in contributing to Nano Alias you are welcome to on our [github](https://github.com/Stormtv/nano-alias)
 
