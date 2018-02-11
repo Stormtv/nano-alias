@@ -1,3 +1,5 @@
+[Documentation](https://documenter.getpostman.com/view/2206404/nano-alias/RVfsFYHj) | [Discord](https://discord.gg/ecVcJM3)
+
 # The Problem
 Sending Nano or any cryptocurrency is not as easy as sending Fiat through an app like Venmo, Swish, or Square Cash. One of the main issues that causes this pain is that you must know your friends address. Solutions such as QR codes work great when you are in person or are able to upload one to a screen but that requires both parties to meetup or share a QR code.
 
