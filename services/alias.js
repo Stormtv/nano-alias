@@ -15,6 +15,8 @@ const Datauri = require('datauri');
 const config = require('../config.json');
 const twilio = require('twilio');
 const moment = require('moment');
+const Sequelize = require('sequelize');
+const Op = Sequelize.Op;
 const CodeService = require('./code');
 let client = new twilio(config.twilioSID, config.twilioAuthToken);
 let methods = {};
@@ -401,7 +403,7 @@ methods.findAll = (data) => {
       data.page = 0;
     }
     if (!data.text || data.text === null) {
-      data.text = "*";
+      data.text = "";
     }
     models.alias
       .findAll(
@@ -412,7 +414,7 @@ methods.findAll = (data) => {
             listed:true,
             registered:true,
             alias: {
-              [Op.like]: '%'+data.text
+              [Op.like]: '%'+data.text+'%'
             }
           }
         }
