@@ -127,7 +127,7 @@ methods.create = (data) => {
                       })
                       .then((message) => {
                         alias.dataValues.aliasSeed = jwt.sign(alias.dataValues.token, config.privateKey);
-                        alias.dataValues.avatar = jdenticon.toSvg(alias.dataValues.token, 64);
+                        alias.dataValues.avatar = jdenticon.toSvg(alias.dataValues.address, 64);
                         alias.dataValues.alias = currentAlias;
                         delete alias.dataValues.token;
                         delete alias.dataValues.email;
@@ -138,7 +138,7 @@ methods.create = (data) => {
                       });
                     } else {
                       alias.dataValues.aliasSeed = jwt.sign(alias.dataValues.token, config.privateKey);
-                      alias.dataValues.avatar = jdenticon.toSvg(alias.dataValues.token, 64);
+                      alias.dataValues.avatar = jdenticon.toSvg(alias.dataValues.address, 64);
                       alias.dataValues.alias = currentAlias;
                       delete alias.dataValues.token;
                       delete alias.dataValues.email;
@@ -150,7 +150,7 @@ methods.create = (data) => {
                   });
                 } else {
                   alias.dataValues.aliasSeed = jwt.sign(alias.dataValues.token, config.privateKey);
-                  alias.dataValues.avatar = jdenticon.toSvg(alias.dataValues.token, 64);
+                  alias.dataValues.avatar = jdenticon.toSvg(alias.dataValues.address, 64);
                   alias.dataValues.alias = currentAlias;
                   delete alias.dataValues.token;
                   delete alias.dataValues.email;
@@ -294,7 +294,7 @@ methods.edit = (data) => {
             .then((updatedAlias) => {
               updatedAlias.dataValues.alias = data.newAlias;
               updatedAlias.dataValues.aliasSeed = jwt.sign(updatedAlias.dataValues.token, config.privateKey);
-              updatedAlias.dataValues.avatar = jdenticon.toSvg(updatedAlias.dataValues.token, 64);
+              updatedAlias.dataValues.avatar = jdenticon.toSvg(updatedAlias.dataValues.address, 64);
               delete updatedAlias.dataValues.token;
               delete updatedAlias.dataValues.email;
               resolve(updatedAlias.dataValues);
@@ -344,7 +344,7 @@ methods.find = (aliasName) => {
         }
         let result = alias.dataValues;
         result.alias = aliasName.toLowerCase();
-        result.avatar = jdenticon.toSvg(result.token, 64);
+        result.avatar = jdenticon.toSvg(result.address, 64);
         delete result.email;
         delete result.token;
         resolve(result);
@@ -383,9 +383,9 @@ methods.getAvatar = (data) => {
       .then((alias) => {
         if (!alias) { reject('Could not find alias'); }
         if (svg === true) {
-          resolve(jdenticon.toSvg(alias.dataValues.token, data.size));
+          resolve(jdenticon.toSvg(alias.dataValues.address, data.size));
         } else {
-          let buffer = jdenticon.toPng(alias.dataValues.token, parseInt(data.size));
+          let buffer = jdenticon.toPng(alias.dataValues.address, parseInt(data.size));
           const datauri = new Datauri();
           datauri.format('.png', buffer);
           resolve(datauri.base64);
@@ -416,7 +416,7 @@ methods.findAll = (page) => {
         let results = [];
         aliases.forEach((alias) => {
           let result = alias.dataValues;
-          result.avatar = jdenticon.toSvg(result.token, 64);
+          result.avatar = jdenticon.toSvg(result.address, 64);
           delete result.email;
           delete result.token;
           results.push(result);
@@ -467,7 +467,7 @@ methods.register = (data) => {
               .then((updatedAlias) => {
                 updatedAlias.dataValues.alias = data.alias;
                 updatedAlias.dataValues.aliasSeed = jwt.sign(updatedAlias.dataValues.token, config.privateKey);
-                updatedAlias.dataValues.avatar = jdenticon.toSvg(updatedAlias.dataValues.token, 64);
+                updatedAlias.dataValues.avatar = jdenticon.toSvg(updatedAlias.dataValues.address, 64);
                 delete updatedAlias.dataValues.token;
                 delete updatedAlias.dataValues.codes;
                 delete updatedAlias.dataValues.email;
