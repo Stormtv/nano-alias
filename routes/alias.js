@@ -101,7 +101,7 @@ router.post('/register', (req, res) => {
 
 router.post('/', (req, res) => {
   Alias
-    .findAll(req.body.page)
+    .findAll(req.body)
     .then((alias) => {
       res
         .status(200)

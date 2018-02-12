@@ -15,6 +15,8 @@ const Datauri = require('datauri');
 const config = require('../config.json');
 const twilio = require('twilio');
 const moment = require('moment');
+const Sequelize = require('sequelize');
+const Op = Sequelize.Op;
 const CodeService = require('./code');
 let client = new twilio(config.twilioSID, config.twilioAuthToken);
 let methods = {};
@@ -272,9 +274,9 @@ methods.edit = (data) => {
             alias.listed = data.listed;
           }
           alias.registered = true;
-          if (data.newAlias !== null && typeof data.newAlias === 'string'
-            && ((letterRegex.test(data.newAlias.charAt(0)) && lnRegex.test(data.newAlias)) || numberRegex.test(data.newAlias))
-            && data.newAlias.length >= 4) {
+          if (data.newAlias !== null && typeof data.newAlias === 'string' &&
+            ((letterRegex.test(data.newAlias.charAt(0)) && lnRegex.test(data.newAlias)) || numberRegex.test(data.newAlias)) &&
+            data.newAlias.length >= 4) {
               if (numberRegex.test(data.newAlias)) {
                 alias.listed = false;
                 alias.registered = false;
@@ -358,11 +360,11 @@ methods.getAvatar = (data) => {
     if (!data.alias) {
       reject('No alias was provided');
     }
-    let size = 64
+    let size = 64;
     if (data.size) {
       size = data.size;
     }
-    let svg = true
+    let svg = true;
     if (data.type && data.type === "png") {
       svg = false;
     }
@@ -395,19 +397,25 @@ methods.getAvatar = (data) => {
   });
 };
 
-methods.findAll = (page) => {
+methods.findAll = (data) => {
   return new Promise((resolve, reject) => {
-    if (!page || page === null) {
-      page = 0;
+    if (!data.page || data.page === null) {
+      data.page = 0;
+    }
+    if (!data.text || data.text === null) {
+      data.text = "";
     }
     models.alias
       .findAll(
         {
-          offset:page*10,
+          offset:data.page*10,
           limit:10,
           where: {
             listed:true,
-            registered:true
+            registered:true,
+            alias: {
+              [Op.like]: '%'+data.text+'%'
+            }
           }
         }
       )
