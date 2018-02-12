@@ -20,9 +20,8 @@
 export default {
   name: 'header',
   data(data) {
-    console.log(data);
     return {
-      choice: data.choice
+      choice: this.choice
     }
   },
   methods: {

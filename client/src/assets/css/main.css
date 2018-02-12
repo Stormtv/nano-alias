@@ -885,7 +885,8 @@ form input, form textarea, .text {
   box-sizing: border-box;
   width: 100%;
   padding: 10px 15px;
-  outline: none; }
+  outline: none;
+  margin-bottom: 1.3em; }
   form input:focus, form textarea:focus, .text:focus {
     border: 1px solid #4a90e2; }
 
