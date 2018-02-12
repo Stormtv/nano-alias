@@ -21,7 +21,7 @@ methods.find = (address) => {
         let results = [];
         aliases.forEach((alias) => {
           let result = alias.dataValues;
-          result.avatar = jdenticon.toSvg(result.token, 64);
+          result.avatar = jdenticon.toSvg(result.address, 64);
           delete result.email;
           delete result.token;
           results.push(result);
