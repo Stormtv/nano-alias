@@ -23,6 +23,7 @@ methods.find = (address) => {
           let result = alias.dataValues;
           result.avatar = jdenticon.toSvg(result.address, 64);
           delete result.email;
+          delete result.registered;
           delete result.token;
           results.push(result);
         });
