@@ -30,7 +30,6 @@ methods.find = (address) => {
           result.avatar = jdenticon.toSvg(hashAvatar(result.alias,result.address), 64);
           delete result.email;
           delete result.addressRegistered;
-          delete result.token;
           results.push(result);
         });
         resolve(results);
