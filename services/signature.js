@@ -218,11 +218,12 @@ function keyFromAccount (account) {
   }
   throw 'Invalid XRB account.'
 }
-let seed = "37F6BB53D70C4179275FF5CC461A0D34D899C3B604F74A497ECF8FDCCEB77A3F";
-let sk = "FED078088D970B1B57A2455C8226A70B82FF6305987BE18007F4897DD68641E1";
-let publicKey = "xrb_3qxb89arh1brtsn39fd5ipx4x3wq758fnfupo5xr17rraqgtaonwebyipxp4";
-let kfa = keyFromAccount(publicKey)
-let message = "stormtv";
-let uint8msg = hex_uint8(message);
-let signed = uint8_hex(nacl.sign.detached(uint8msg, hex_uint8(sk)));
-console.log(signed);
+
+function verify(alias, signedAlias, address) {
+  let kfa = keyFromAccount(address);
+  return nacl.sign.detached.verify(hex_uint8(alias), hex_uint8(signedAlias), hex_uint8(kfa));
+}
+
+module.exports = {
+  verify: verify
+}

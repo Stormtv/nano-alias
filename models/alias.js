@@ -33,7 +33,12 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       require: true
     },
-    registered: {
+    addressRegistered: {
+      type: DataTypes.BOOLEAN,
+      require: true,
+      defaultValue: false
+    },
+    phoneRegistered: {
       type: DataTypes.BOOLEAN,
       require: true,
       defaultValue: false

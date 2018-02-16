@@ -19,7 +19,7 @@ methods.find = (address) => {
         where: {
           address: address,
           listed: true,
-          registered: true
+          addressRegistered: true
         }
       })
       .then((aliases) => {
@@ -29,7 +29,7 @@ methods.find = (address) => {
           let result = alias.dataValues;
           result.avatar = jdenticon.toSvg(hashAvatar(result.alias,result.address), 64);
           delete result.email;
-          delete result.registered;
+          delete result.addressRegistered;
           delete result.token;
           results.push(result);
         });
