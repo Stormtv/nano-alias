@@ -15,7 +15,7 @@ const Datauri = require('datauri');
 const config = require('../config.json');
 const twilio = require('twilio');
 const moment = require('moment');
-const verify = require('./signature');
+const signature = require('./signature');
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 const CodeService = require('./code');
@@ -120,7 +120,6 @@ methods.create = (data) => {
                 email: data.email,
                 token: crypto.createHmac('sha256', config.privateKey).update(buf.toString('hex')).digest('hex'),
                 listed: data.listed,
-                signature: data.signedAlias,
                 addressRegistered: data.addressRegistered,
                 phoneRegistered: data.phoneRegistered
               })
