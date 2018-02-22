@@ -5,8 +5,8 @@ const xrbRegex = /((?:xrb_[13][a-km-zA-HJ-NP-Z0-9]{59})|(?:nano_[13][a-km-zA-HJ-
   ensure it is a letter regardless of language.
 */
 const XRegExp = require('xregexp');
-const letterRegex = XRegExp('^\\pL+$');
-const lnRegex = XRegExp('^(\\pL|\\pN)+$');
+const letterRegex = XRegExp('^\\p{Ll}+$');
+const lnRegex = XRegExp('^(\\p{Ll}|\\pN)+$');
 const numberRegex = /^(\+[0-9]{1,3}|0)[0-9]{3}( ){0,1}[0-9]{7,8}\b/;
 const crypto = require('crypto');
 const jdenticon = require('jdenticon');
@@ -94,11 +94,11 @@ methods.create = (data) => {
       reject('Aliases must be at least 4 characters in length aliases of 3 character and less are reserved');
     }
     data.addressRegistered = false;
-    if (data.signedAlias && typeof data.signedAlias === 'string') {
-      data.addressRegistered = signature.verify(data.alias, data.signedAlias, data.address);
+    if (data.signature && typeof data.signature === 'string') {
+      data.addressRegistered = signature.verify(data.signature, [data.alias.toLowerCase(), data.address], data.address);
     }
     methods
-      .find(data.alias)
+      .find(data.alias.toLowerCase())
       .then((alias) => {
         reject(`${data.alias} has already been taken!`);
       })
@@ -112,15 +112,20 @@ methods.create = (data) => {
           }
           crypto.randomBytes(8, (err, buf) => {
             if (err) reject(err);
+            let formData = {
+              alias: data.alias.toLowerCase(),
+              address: data.address,
+              email: data.email,
+              seed: crypto.createHmac('sha256', config.privateKey).update(buf.toString('hex')).digest('hex'),
+              listed: data.listed,
+              addressRegistered: data.addressRegistered,
+              phoneRegistered: data.phoneRegistered
+            };
+            if (data.signature && typeof data.signature === 'string') {
+              formData.signature = data.signature;
+            }
             models.alias
-              .create({
-                alias: data.alias.toLowerCase(),
-                address: data.address,
-                email: data.email,
-                listed: data.listed,
-                addressRegistered: data.addressRegistered,
-                phoneRegistered: data.phoneRegistered
-              })
+              .create(formData)
               .then((alias) => {
                 if (alias.dataValues.phoneRegistered === false) {
                   let code = random(6);
@@ -139,7 +144,6 @@ methods.create = (data) => {
                         alias.dataValues.avatar = jdenticon.toSvg(hashAvatar(currentAlias,alias.dataValues.address), 64);
                         alias.dataValues.alias = currentAlias;
                         delete alias.dataValues.email;
-                        delete alias.dataValues.addressRegistered;
                         resolve(alias.dataValues);
                       })
                       .catch((err) => {
@@ -149,7 +153,6 @@ methods.create = (data) => {
                       alias.dataValues.avatar = jdenticon.toSvg(hashAvatar(currentAlias,alias.dataValues.address), 64);
                       alias.dataValues.alias = currentAlias;
                       delete alias.dataValues.email;
-                      delete alias.dataValues.addressRegistered;
                       resolve(alias.dataValues);
                     }
                   })
@@ -160,7 +163,6 @@ methods.create = (data) => {
                   alias.dataValues.avatar = jdenticon.toSvg(hashAvatar(currentAlias,alias.dataValues.address), 64);
                   alias.dataValues.alias = currentAlias;
                   delete alias.dataValues.email;
-                  delete alias.dataValues.addressRegistered;
                   delete alias.dataValues.phoneRegistered;
                   resolve(alias.dataValues);
                 }
@@ -199,47 +201,50 @@ methods.delete = (data) => {
     } else if (!lnRegex.test(data.alias)) {
       reject('Invalid alias format: must start with a Unicode Letter & only container unicode letters or symbols');
     }
-    if (!data.signedAlias) {
-      reject('No signature provided');
+    if (!data.privateSignature) {
+      reject('No private signature provided');
     }
-    if (typeof data.signedAlias !== 'string') {
-      reject('Invalid signature provided');
+    if (typeof data.privateSignature !== 'string') {
+      reject('Invalid private signature provided');
     }
-    if (signature.verify(data.alias, data.signedAlias, data.address) === true) {
-      try {
-        models.alias
-          .destroy({
-            where: {
-              $or: [
-                {
-                  alias: data.alias.toLowerCase()
-                },
-                {
-                  alias: crypto.createHmac('sha256', config.privateKey).update(data.alias.toLowerCase()).digest('hex')
-                }
-              ],
-              address: data.address
-            }
-          })
-          .then((alias) => {
-            resolve(alias.dataValues);
-          })
-          .catch((err) => {
-            reject(err);
-          });
-      } catch(err) {
-        reject('Invalid Alias Seed');
-      }
-    } else {
-      reject('Signature did not match');
+    try {
+      models.alias
+        .findOne({
+          where: {
+            $or: [
+              {
+                alias: data.alias.toLowerCase()
+              },
+              {
+                alias: crypto.createHmac('sha256', config.privateKey).update(data.alias.toLowerCase()).digest('hex')
+              }
+            ],
+            address: data.address
+          }
+        })
+        .then((alias) => {
+          if (signature.verify(data.privateSignature, [data.alias.toLowerCase(), alias.address, alias.seed], alias.address) === true) {
+            alias.destroy()
+              .then(() => {
+                resolve('Deleted ' + data.alias.toLowerCase());
+              })
+              .catch((err) => { reject(err); });
+          } else {
+            reject('Could not verify privateSignature');
+          }
+          resolve(alias.dataValues);
+        })
+        .catch((err) => {
+          reject(err);
+        });
+    } catch(err) {
+      reject('Invalid Alias Seed');
     }
   });
 };
 
 methods.edit = (data) => {
   return new Promise((resolve, reject) => {
-
-    //Validate Proper Credentials to initate the edit.
     if (!data.alias) {
       reject('No alias provided');
     }
@@ -255,11 +260,11 @@ methods.edit = (data) => {
     } else if (!lnRegex.test(data.alias)) {
       reject('Invalid alias format: must start with a Unicode Letter & only container unicode letters or symbols');
     }
-    if (!data.signedAlias) {
-      reject('No signature provided');
+    if (!data.privateSignature) {
+      reject('No private signature provided');
     }
-    if (typeof data.signedAlias !== 'string') {
-      reject('Invalid signature provided');
+    if (typeof data.privateSignature !== 'string') {
+      reject('Invalid private signature provided');
     }
     if (!data.address) {
       reject('No address provided');
@@ -267,115 +272,148 @@ methods.edit = (data) => {
     if (typeof data.address !== 'string' && xrbRegex.test(data.address)) {
       reject('Invalid address provided');
     }
-    if (signature.verify(data.alias, data.signedAlias, data.address) === true) {
-      try {
-        models.alias
-          .findOne({
-            where: {
-              $or: [
-                {
-                  alias: data.alias.toLowerCase()
-                },
-                {
-                  alias: crypto.createHmac('sha256', config.privateKey).update(data.alias.toLowerCase()).digest('hex')
-                }
-              ]
-            }
-          })
-          .then((alias) => {
-            if (data.newAddress !== null && typeof data.newAddress === 'string' && xrbRegex.test(data.newAddress)) {
-              alias.address = data.newAddress;
-              if (data.newSignedAlias === null || typeof data.newSignedAlias !== 'string') {
-                reject('Must pass newSignedAlias if changing addresses');
+    try {
+      models.alias
+        .findOne({
+          where: {
+            $or: [
+              {
+                alias: data.alias.toLowerCase()
+              },
+              {
+                alias: crypto.createHmac('sha256', config.privateKey).update(data.alias.toLowerCase()).digest('hex')
               }
-            }
-            if (data.email !== null && typeof data.email === 'string') {
-              alias.email = encryptEmail(data.email);
-            }
-            if (data.listed !== null && typeof data.listed === 'string' && (data.listed === "true" || data.listed === "false")) {
-              alias.listed = data.listed;
-            }
-            let currentAlias = null;
-            if (data.newAlias !== null && typeof data.newAlias === 'string' &&
-              ((letterRegex.test(data.newAlias.charAt(0)) && lnRegex.test(data.newAlias)) || numberRegex.test(data.newAlias)) &&
-              data.newAlias.length >= 4) {
-                if (numberRegex.test(data.newAlias)) {
-                  alias.listed = false;
-                  alias.phoneRegistered = false;
-                }
-                if (alias.listed === false) {
-                  alias.alias = crypto.createHmac('sha256', config.privateKey).update(data.newAlias.toLowerCase()).digest('hex');
+            ],
+            address: data.address
+          }
+        })
+        .then((alias) => {
+          try {
+            if (signature.verify(data.privateSignature, [data.alias.toLowerCase(), alias.address, alias.seed], alias.address) === true) {
+              //Check if editing listed first
+              if (data.listed !== null && typeof data.listed === 'string' && (data.listed === "true" || data.listed === "false")) {
+                alias.listed = data.listed;
+              }
+
+              //Invalidating the signature should occur if alias or address changes.
+              let invalidateSignature = false;
+
+              //Check if editing alias second
+              let currentAlias = null;
+              if (data.newAlias !== null && typeof data.newAlias === 'string' &&
+                ((letterRegex.test(data.newAlias.charAt(0)) && lnRegex.test(data.newAlias)) || numberRegex.test(data.newAlias)) &&
+                data.newAlias.length >= 4) {
+                  invalidateSignature = true;
+                  if (numberRegex.test(data.newAlias)) {
+                    //Phone Numbers are always unlisted and must be re-registered
+                    alias.listed = false;
+                    alias.phoneRegistered = false;
+                  } else {
+                    //Changed from phone number to shortcode
+                    alias.phoneRegistered = true;
+                  }
+                  if (alias.listed === false) {
+                    //Hash unlisted aliases
+                    alias.alias = crypto.createHmac('sha256', config.privateKey).update(data.newAlias.toLowerCase()).digest('hex');
+                  } else {
+                    //Always use lowercase values | regex should reject it but just in case ;)
+                    alias.alias = data.newAlias.toLowerCase();
+                  }
+                  currentAlias = data.newAlias.toLowerCase();
+              } else {
+                currentAlias = data.alias.toLowerCase();
+              }
+
+              //Check if editing address third & validate ownership of that address
+              if (data.newAddress !== null && typeof data.newAddress === 'string' && xrbRegex.test(data.newAddress)) {
+                alias.address = data.newAddress;
+                invalidateSignature = true;
+                alias.addressRegistered = false;
+              }
+
+              //Validate Ownership of address and edit the alias signature
+              if (invalidateSignature === true) {
+                if (data.newSignature !== null && typeof data.newSignature === 'string') {
+                  console.log(`Validating New Signature with ${currentAlias} and ${alias.address}`);
+                  if (signature.verify(data.newSignature, [currentAlias, alias.address], alias.address) === true) {
+                    alias.addressRegistered = true;
+                    alias.signature = data.newSignature;
+                  } else {
+                    return reject("Unable to verify New Signature for the edited values, You are not allowed to edit without a valid signature as you would lose your alias.")
+                  }
                 } else {
-                  alias.alias = data.newAlias.toLowerCase();
+                  return reject("New signature was not provided or was invalid")
                 }
-                currentAlias = alias.alias;
-            } else {
-              currentAlias = data.alias.toLowerCase();
-            }
-            alias.addressRegistered = false;
-            if (data.signedAlias && typeof data.signedAlias === 'string') {
-              alias.addressRegistered = signature.verify(currentAlias, data.newSignedAlias, alias.address);
-            }
-            crypto.randomBytes(8, (err, buf) => {
-              if (err) reject(err);
-              alias.verified = false;
-              alias.save()
-              .then((updatedAlias) => {
-                //Send new verfication code
-                if (updatedAlias.dataValues.phoneRegistered === false) {
-                  let code = random(6);
-                  return CodeService.create({
-                    id: updatedAlias.dataValues.id,
-                    code: code
-                  })
-                  .then((code) => {
-                    if (config.twilioEnabled) {
-                      client.messages.create({
-                          body: `Nano Alias: ${code.dataValues.code} is your SMS verification code.`,
-                          to: currentAlias,
-                          from: config.twilioPhoneNumber
-                      })
-                      .then((message) => {
+              }
+
+              //Email fourth
+              if (data.email !== null && typeof data.email === 'string') {
+                alias.email = encryptEmail(data.email);
+              }
+
+              crypto.randomBytes(8, (err, buf) => {
+                if (err) reject(err);
+                //Verification is always removed on edit
+                alias.verified = false;
+                //Seed is always regenerated after any edits so any future privateSignatures are different and can't be replayed!
+                alias.seed = crypto.createHmac('sha256', config.privateKey).update(buf.toString('hex')).digest('hex');
+                alias.save()
+                .then((updatedAlias) => {
+                  //Send new verfication code
+                  if (updatedAlias.dataValues.phoneRegistered === false) {
+                    let code = random(6);
+                    return CodeService.create({
+                      id: updatedAlias.dataValues.id,
+                      code: code
+                    })
+                    .then((code) => {
+                      if (config.twilioEnabled) {
+                        client.messages.create({
+                            body: `Nano Alias: ${code.dataValues.code} is your SMS verification code.`,
+                            to: currentAlias,
+                            from: config.twilioPhoneNumber
+                        })
+                        .then((message) => {
+                          updatedAlias.dataValues.avatar = jdenticon.toSvg(hashAvatar(currentAlias,updatedAlias.dataValues.address), 64);
+                          updatedAlias.dataValues.alias = currentAlias;
+                          delete updatedAlias.dataValues.email;
+                          resolve(updatedAlias.dataValues);
+                        })
+                        .catch((err) => {
+                          reject(err);
+                        });
+                      } else {
                         updatedAlias.dataValues.avatar = jdenticon.toSvg(hashAvatar(currentAlias,updatedAlias.dataValues.address), 64);
                         updatedAlias.dataValues.alias = currentAlias;
                         delete updatedAlias.dataValues.email;
-                        delete updatedAlias.dataValues.addressRegistered;
                         resolve(updatedAlias.dataValues);
-                      })
-                      .catch((err) => {
-                        reject(err);
-                      });
-                    } else {
-                      updatedAlias.dataValues.avatar = jdenticon.toSvg(hashAvatar(currentAlias,updatedAlias.dataValues.address), 64);
-                      updatedAlias.dataValues.alias = currentAlias;
-                      delete updatedAlias.dataValues.email;
-                      delete updatedAlias.dataValues.addressRegistered;
-                      resolve(updatedAlias.dataValues);
-                    }
-                  })
-                  .catch((err) => {
-                    reject(err);
-                  });
-                } else {
-                  updatedAlias.dataValues.alias = currentAlias;
-                  updatedAlias.dataValues.avatar = jdenticon.toSvg(hashAvatar(currentAlias,updatedAlias.dataValues.address), 64);
-                  delete updatedAlias.dataValues.addressRegistered;
-                  delete updatedAlias.dataValues.phoneRegistered;
-                  delete updatedAlias.dataValues.email;
-                  resolve(updatedAlias.dataValues);
-                }
-              })
-              .catch((err) => { reject(err); });
-            });
-          })
-          .catch((err) => {
-            reject(err);
-          });
-      } catch(err) {
-        reject('Invalid Alias Seed');
-      }
-    } else {
-      reject('Signature did not match');
+                      }
+                    })
+                    .catch((err) => {
+                      reject(err);
+                    });
+                  } else {
+                    updatedAlias.dataValues.alias = currentAlias;
+                    updatedAlias.dataValues.avatar = jdenticon.toSvg(hashAvatar(currentAlias,updatedAlias.dataValues.address), 64);
+                    delete updatedAlias.dataValues.phoneRegistered;
+                    delete updatedAlias.dataValues.email;
+                    resolve(updatedAlias.dataValues);
+                  }
+                })
+                .catch((err) => { reject(err); });
+              });
+            } else {
+              reject('Could not verify privateSignature');
+            }
+          } catch(error) {
+            console.log(error);
+          }
+        })
+        .catch((err) => {
+          reject(err);
+        });
+    } catch(err) {
+      reject('Invalid Alias Seed');
     }
   });
 };
@@ -415,6 +453,7 @@ methods.find = (aliasName) => {
         result.alias = aliasName.toLowerCase();
         result.avatar = jdenticon.toSvg(hashAvatar(aliasName.toLowerCase(),result.address), 64);
         delete result.email;
+        delete result.seed;
         delete result.addressRegistered;
         delete result.phoneRegistered;
         resolve(result);
@@ -496,6 +535,7 @@ methods.findAll = (data) => {
           let result = alias.dataValues;
           result.avatar = jdenticon.toSvg(hashAvatar(result.alias,result.address), 64);
           delete result.email;
+          delete result.seed;
           delete result.addressRegistered;
           delete result.phoneRegistered;
           results.push(result);
@@ -536,6 +576,8 @@ methods.registerPhone = (data) => {
       })
       .then((alias) => {
         if (!alias) { reject('Could not find an alias with provided alias and verfication code'); }
+        //TODO Should we delete codes on invalid registration and force a new registration?
+        //Could open a vulnerability with bruteforcing registration codes?
         if (alias.codes.length > 0 && moment().diff(moment(alias.codes[0].createdAt), "minutes") < 10) {
           return alias.codes[0].destroy()
             .then((destroyedCode) => {
@@ -548,6 +590,7 @@ methods.registerPhone = (data) => {
                 updatedAlias.dataValues.avatar = jdenticon.toSvg(hashAvatar(data.alias,updatedAlias.dataValues.address), 64);
                 delete updatedAlias.dataValues.codes;
                 delete updatedAlias.dataValues.email;
+                delete updatedAlias.dataValues.seed;
                 delete updatedAlias.dataValues.addressRegistered;
                 delete updatedAlias.dataValues.phoneRegistered;
                 resolve(updatedAlias.dataValues);
@@ -578,11 +621,11 @@ methods.registerAddress = (data) => {
     if (typeof data.alias !== 'string') {
       reject('Invalid alias provided');
     }
-    if (!data.signedAlias) {
-      reject('No signed alias was provided');
+    if (!data.signature) {
+      reject('No signature was provided');
     }
-    if (typeof data.signedAlias !== 'string') {
-      reject('Invalid signed alias provided');
+    if (typeof data.signature !== 'string') {
+      reject('Invalid signature alias provided');
     }
     models.alias
       .findOne({
@@ -599,21 +642,20 @@ methods.registerAddress = (data) => {
       })
       .then((alias) => {
         if (!alias) { reject('Could not find an alias with provided alias'); }
-        if (data.signedAlias && typeof data.signedAlias === 'string') {
-          alias.addressRegistered = signature.verify(data.alias, data.signedAlias, alias.address);
-          if (alias.addressRegistered === true) {
-            return alias.save()
-            .then((updatedAlias) => {
-              updatedAlias.dataValues.alias = data.alias;
-              updatedAlias.dataValues.avatar = jdenticon.toSvg(hashAvatar(data.alias,updatedAlias.dataValues.address), 64);
-              delete updatedAlias.dataValues.codes;
-              delete updatedAlias.dataValues.email;
-              delete updatedAlias.dataValues.addressRegistered;
-              delete updatedAlias.dataValues.phoneRegistered;
-              resolve(updatedAlias.dataValues);
-            })
-            .catch((err) => { reject(err); });
-          }
+        alias.addressRegistered = signature.verify(data.signature, [data.alias.toLowerCase(), alias.address], alias.address);
+        if (alias.addressRegistered === true) {
+          return alias.save()
+          .then((updatedAlias) => {
+            updatedAlias.dataValues.alias = data.alias;
+            updatedAlias.dataValues.avatar = jdenticon.toSvg(hashAvatar(data.alias,updatedAlias.dataValues.address), 64);
+            delete updatedAlias.dataValues.codes;
+            delete updatedAlias.dataValues.email;
+            delete updatedAlias.dataValues.seed;
+            delete updatedAlias.dataValues.addressRegistered;
+            delete updatedAlias.dataValues.phoneRegistered;
+            resolve(updatedAlias.dataValues);
+          })
+          .catch((err) => { reject(err); });
         }
       })
       .catch((err) => { reject(err); });

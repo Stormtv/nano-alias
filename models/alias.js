@@ -29,6 +29,14 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false
     },
+    signature: {
+      type: DataTypes.STRING,
+      require: false
+    },
+    seed: {
+      type: DataTypes.STRING,
+      require: true
+    },
     addressRegistered: {
       type: DataTypes.BOOLEAN,
       require: true,
