@@ -186,12 +186,6 @@ methods.delete = (data) => {
     if (typeof data.alias !== 'string') {
       reject('Invalid alias provided');
     }
-    if (!data.address) {
-      reject('No address provided');
-    }
-    if (typeof data.address !== 'string' && xrbRegex.test(data.address)) {
-      reject('Invalid address provided');
-    }
     if (!letterRegex.test(data.alias.charAt(0))) {
       //Not a valid alias is this a valid phone number?
       if (!numberRegex.test(data.alias)) {
@@ -218,8 +212,7 @@ methods.delete = (data) => {
               {
                 alias: crypto.createHmac('sha256', config.privateKey).update(data.alias.toLowerCase()).digest('hex')
               }
-            ],
-            address: data.address
+            ]
           }
         })
         .then((alias) => {
