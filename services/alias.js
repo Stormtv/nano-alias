@@ -288,125 +288,120 @@ methods.edit = (data) => {
           }
         })
         .then((alias) => {
-          try {
-            if (signature.verify(data.privateSignature, [data.alias.toLowerCase(), alias.address, alias.seed], alias.address) === true) {
-              //Check if editing listed first
-              if (data.listed !== null && typeof data.listed === 'string' && (data.listed === "true" || data.listed === "false")) {
-                alias.listed = data.listed;
-              }
+          if (signature.verify(data.privateSignature, [data.alias.toLowerCase(), alias.address, alias.seed], alias.address) === true) {
+            //Check if editing listed first
+            if (data.listed !== null && typeof data.listed === 'string' && (data.listed === "true" || data.listed === "false")) {
+              alias.listed = data.listed;
+            }
 
-              //Invalidating the signature should occur if alias or address changes.
-              let invalidateSignature = false;
+            //Invalidating the signature should occur if alias or address changes.
+            let invalidateSignature = false;
 
-              //Check if editing alias second
-              let currentAlias = null;
-              if (data.newAlias !== null && typeof data.newAlias === 'string' &&
-                ((letterRegex.test(data.newAlias.charAt(0)) && lnRegex.test(data.newAlias)) || numberRegex.test(data.newAlias)) &&
-                data.newAlias.length >= 4) {
-                  invalidateSignature = true;
-                  if (numberRegex.test(data.newAlias)) {
-                    //Phone Numbers are always unlisted and must be re-registered
-                    alias.listed = false;
-                    alias.phoneRegistered = false;
-                  } else {
-                    //Changed from phone number to shortcode
-                    alias.phoneRegistered = true;
-                  }
-                  if (alias.listed === false) {
-                    //Hash unlisted aliases
-                    alias.alias = crypto.createHmac('sha256', config.privateKey).update(data.newAlias.toLowerCase()).digest('hex');
-                  } else {
-                    //Always use lowercase values | regex should reject it but just in case ;)
-                    alias.alias = data.newAlias.toLowerCase();
-                  }
-                  currentAlias = data.newAlias.toLowerCase();
-              } else {
-                currentAlias = data.alias.toLowerCase();
-              }
-
-              //Check if editing address third & validate ownership of that address
-              if (data.newAddress !== null && typeof data.newAddress === 'string' && xrbRegex.test(data.newAddress)) {
-                alias.address = data.newAddress;
+            //Check if editing alias second
+            let currentAlias = null;
+            if (data.newAlias !== null && typeof data.newAlias === 'string' &&
+              ((letterRegex.test(data.newAlias.charAt(0)) && lnRegex.test(data.newAlias)) || numberRegex.test(data.newAlias)) &&
+              data.newAlias.length >= 4) {
                 invalidateSignature = true;
-                alias.addressRegistered = false;
-              }
-
-              //Validate Ownership of address and edit the alias signature
-              if (invalidateSignature === true) {
-                if (data.newSignature !== null && typeof data.newSignature === 'string') {
-                  console.log(`Validating New Signature with ${currentAlias} and ${alias.address}`);
-                  if (signature.verify(data.newSignature, [currentAlias, alias.address], alias.address) === true) {
-                    alias.addressRegistered = true;
-                    alias.signature = data.newSignature;
-                  } else {
-                    return reject("Unable to verify New Signature for the edited values, You are not allowed to edit without a valid signature as you would lose your alias.")
-                  }
+                if (numberRegex.test(data.newAlias)) {
+                  //Phone Numbers are always unlisted and must be re-registered
+                  alias.listed = false;
+                  alias.phoneRegistered = false;
                 } else {
-                  return reject("New signature was not provided or was invalid")
+                  //Changed from phone number to shortcode
+                  alias.phoneRegistered = true;
                 }
-              }
+                if (alias.listed === false) {
+                  //Hash unlisted aliases
+                  alias.alias = crypto.createHmac('sha256', config.privateKey).update(data.newAlias.toLowerCase()).digest('hex');
+                } else {
+                  //Always use lowercase values | regex should reject it but just in case ;)
+                  alias.alias = data.newAlias.toLowerCase();
+                }
+                currentAlias = data.newAlias.toLowerCase();
+            } else {
+              currentAlias = data.alias.toLowerCase();
+            }
 
-              //Email fourth
-              if (data.email !== null && typeof data.email === 'string') {
-                alias.email = encryptEmail(data.email);
-              }
+            //Check if editing address third & validate ownership of that address
+            if (data.newAddress !== null && typeof data.newAddress === 'string' && xrbRegex.test(data.newAddress)) {
+              alias.address = data.newAddress;
+              invalidateSignature = true;
+              alias.addressRegistered = false;
+            }
 
-              crypto.randomBytes(8, (err, buf) => {
-                if (err) reject(err);
-                //Verification is always removed on edit
-                alias.verified = false;
-                //Seed is always regenerated after any edits so any future privateSignatures are different and can't be replayed!
-                alias.seed = crypto.createHmac('sha256', config.privateKey).update(buf.toString('hex')).digest('hex');
-                alias.save()
-                .then((updatedAlias) => {
-                  //Send new verfication code
-                  if (updatedAlias.dataValues.phoneRegistered === false) {
-                    let code = random(6);
-                    return CodeService.create({
-                      id: updatedAlias.dataValues.id,
-                      code: code
-                    })
-                    .then((code) => {
-                      if (config.twilioEnabled) {
-                        client.messages.create({
-                            body: `Nano Alias: ${code.dataValues.code} is your SMS verification code.`,
-                            to: currentAlias,
-                            from: config.twilioPhoneNumber
-                        })
-                        .then((message) => {
-                          updatedAlias.dataValues.avatar = jdenticon.toSvg(hashAvatar(currentAlias,updatedAlias.dataValues.address), 64);
-                          updatedAlias.dataValues.alias = currentAlias;
-                          delete updatedAlias.dataValues.email;
-                          resolve(updatedAlias.dataValues);
-                        })
-                        .catch((err) => {
-                          reject(err);
-                        });
-                      } else {
+            //Validate Ownership of address and edit the alias signature
+            if (invalidateSignature === true) {
+              if (data.newSignature !== null && typeof data.newSignature === 'string') {
+                if (signature.verify(data.newSignature, [currentAlias, alias.address], alias.address) === true) {
+                  alias.addressRegistered = true;
+                  alias.signature = data.newSignature;
+                } else {
+                  return reject("Unable to verify New Signature for the edited values, You are not allowed to edit without a valid signature as you would lose your alias.")
+                }
+              } else {
+                return reject("New signature was not provided or was invalid")
+              }
+            }
+
+            //Email fourth
+            if (data.email !== null && typeof data.email === 'string') {
+              alias.email = encryptEmail(data.email);
+            }
+
+            crypto.randomBytes(8, (err, buf) => {
+              if (err) reject(err);
+              //Verification is always removed on edit
+              alias.verified = false;
+              //Seed is always regenerated after any edits so any future privateSignatures are different and can't be replayed!
+              alias.seed = crypto.createHmac('sha256', config.privateKey).update(buf.toString('hex')).digest('hex');
+              alias.save()
+              .then((updatedAlias) => {
+                //Send new verfication code
+                if (updatedAlias.dataValues.phoneRegistered === false) {
+                  let code = random(6);
+                  return CodeService.create({
+                    id: updatedAlias.dataValues.id,
+                    code: code
+                  })
+                  .then((code) => {
+                    if (config.twilioEnabled) {
+                      client.messages.create({
+                          body: `Nano Alias: ${code.dataValues.code} is your SMS verification code.`,
+                          to: currentAlias,
+                          from: config.twilioPhoneNumber
+                      })
+                      .then((message) => {
                         updatedAlias.dataValues.avatar = jdenticon.toSvg(hashAvatar(currentAlias,updatedAlias.dataValues.address), 64);
                         updatedAlias.dataValues.alias = currentAlias;
                         delete updatedAlias.dataValues.email;
                         resolve(updatedAlias.dataValues);
-                      }
-                    })
-                    .catch((err) => {
-                      reject(err);
-                    });
-                  } else {
-                    updatedAlias.dataValues.alias = currentAlias;
-                    updatedAlias.dataValues.avatar = jdenticon.toSvg(hashAvatar(currentAlias,updatedAlias.dataValues.address), 64);
-                    delete updatedAlias.dataValues.phoneRegistered;
-                    delete updatedAlias.dataValues.email;
-                    resolve(updatedAlias.dataValues);
-                  }
-                })
-                .catch((err) => { reject(err); });
-              });
-            } else {
-              reject('Could not verify privateSignature');
-            }
-          } catch(error) {
-            console.log(error);
+                      })
+                      .catch((err) => {
+                        reject(err);
+                      });
+                    } else {
+                      updatedAlias.dataValues.avatar = jdenticon.toSvg(hashAvatar(currentAlias,updatedAlias.dataValues.address), 64);
+                      updatedAlias.dataValues.alias = currentAlias;
+                      delete updatedAlias.dataValues.email;
+                      resolve(updatedAlias.dataValues);
+                    }
+                  })
+                  .catch((err) => {
+                    reject(err);
+                  });
+                } else {
+                  updatedAlias.dataValues.alias = currentAlias;
+                  updatedAlias.dataValues.avatar = jdenticon.toSvg(hashAvatar(currentAlias,updatedAlias.dataValues.address), 64);
+                  delete updatedAlias.dataValues.phoneRegistered;
+                  delete updatedAlias.dataValues.email;
+                  resolve(updatedAlias.dataValues);
+                }
+              })
+              .catch((err) => { reject(err); });
+            });
+          } else {
+            reject('Could not verify privateSignature');
           }
         })
         .catch((err) => {
