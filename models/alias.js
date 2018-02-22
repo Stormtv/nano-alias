@@ -29,11 +29,20 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false
     },
-    token: {
+    signature: {
+      type: DataTypes.STRING,
+      require: false
+    },
+    seed: {
       type: DataTypes.STRING,
       require: true
     },
-    registered: {
+    addressRegistered: {
+      type: DataTypes.BOOLEAN,
+      require: true,
+      defaultValue: false
+    },
+    phoneRegistered: {
       type: DataTypes.BOOLEAN,
       require: true,
       defaultValue: false

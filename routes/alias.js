@@ -75,15 +75,39 @@ router.get('/:alias', (req, res) => {
     });
 });
 
-router.post('/register', (req, res) => {
+router.post('/registerPhone', (req, res) => {
   Alias
-    .register(req.body)
+    .registerPhone(req.body)
     .then((alias) => {
       res
         .status(200)
         .json({
           'status': 'SUCCESS',
           'message': 'Successfully registered the SMS with the alias',
+          'data': {
+            'alias': alias
+          }
+        });
+    })
+    .catch((err) => {
+      res
+        .status(422)
+        .json({
+          'status': 'ERROR',
+          'message': err
+        });
+    });
+});
+
+router.post('/registerAddress', (req, res) => {
+  Alias
+    .registerAddress(req.body)
+    .then((alias) => {
+      res
+        .status(200)
+        .json({
+          'status': 'SUCCESS',
+          'message': 'Successfully registered the address with the alias',
           'data': {
             'alias': alias
           }
