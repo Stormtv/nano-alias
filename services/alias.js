@@ -17,7 +17,7 @@ const moment = require('moment');
 const signature = require('./signature');
 const Sequelize = require('sequelize');
 const sgMail = require('@sendgrid/mail');
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+sgMail.setApiKey(config.SENDGRID_API_KEY);
 sgMail.setSubstitutionWrappers('{{', '}}');
 const Op = Sequelize.Op;
 const CodeService = require('./code');
