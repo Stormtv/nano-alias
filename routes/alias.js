@@ -99,30 +99,6 @@ router.post('/registerPhone', (req, res) => {
     });
 });
 
-router.post('/registerAddress', (req, res) => {
-  Alias
-    .registerAddress(req.body)
-    .then((alias) => {
-      res
-        .status(200)
-        .json({
-          'status': 'SUCCESS',
-          'message': 'Successfully registered the address with the alias',
-          'data': {
-            'alias': alias
-          }
-        });
-    })
-    .catch((err) => {
-      res
-        .status(422)
-        .json({
-          'status': 'ERROR',
-          'message': err
-        });
-    });
-});
-
 router.post('/', (req, res) => {
   Alias
     .findAll(req.body)

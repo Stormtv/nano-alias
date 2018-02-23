@@ -93,9 +93,17 @@ methods.create = (data) => {
     if (data.alias.length < 4) {
       reject('Aliases must be at least 4 characters in length aliases of 3 character and less are reserved');
     }
+    if (!data.signature) {
+      reject('No signature provided');
+    }
+    if (typeof data.signature !== 'string') {
+      reject('Invalid signature provided');
+    }
     data.addressRegistered = false;
-    if (data.signature && typeof data.signature === 'string') {
-      data.addressRegistered = signature.verify(data.signature, [data.alias.toLowerCase(), data.address], data.address);
+    if (signature.verify(data.signature, [data.alias.toLowerCase(), data.address], data.address) {
+      data.addressRegistered = true;
+    } else {
+      reject(`Couldn't Verify Signature`);
     }
     methods
       .find(data.alias.toLowerCase())
@@ -426,7 +434,7 @@ methods.find = (aliasName) => {
       })
       .then((alias) => {
         if (!alias) { reject('Could not find alias'); }
-        if (alias.dataValues.addressRegistered === false || alias.dataValues.phoneRegistered === false) {
+        if (alias.dataValues.phoneRegistered === false) {
           if (moment().diff(moment(alias.dataValues.updatedAt), "minutes") >= 10) {
             alias.destroy()
               .then(() => {
@@ -595,55 +603,6 @@ methods.registerPhone = (data) => {
               })
               .catch((err) => { reject(err); });
           }
-        }
-      })
-      .catch((err) => { reject(err); });
-  });
-};
-
-methods.registerAddress = (data) => {
-  return new Promise((resolve, reject) => {
-    if (!data.alias) {
-      reject('No alias provided');
-    }
-    if (typeof data.alias !== 'string') {
-      reject('Invalid alias provided');
-    }
-    if (!data.signature) {
-      reject('No signature was provided');
-    }
-    if (typeof data.signature !== 'string') {
-      reject('Invalid signature alias provided');
-    }
-    models.alias
-      .findOne({
-        where: {
-          $or: [
-            {
-              alias: data.alias.toLowerCase()
-            },
-            {
-              alias: crypto.createHmac('sha256', config.privateKey).update(data.alias.toLowerCase()).digest('hex')
-            }
-          ]
-        }
-      })
-      .then((alias) => {
-        if (!alias) { reject('Could not find an alias with provided alias'); }
-        alias.addressRegistered = signature.verify(data.signature, [data.alias.toLowerCase(), alias.address], alias.address);
-        if (alias.addressRegistered === true) {
-          return alias.save()
-          .then((updatedAlias) => {
-            updatedAlias.dataValues.alias = data.alias;
-            updatedAlias.dataValues.avatar = jdenticon.toSvg(hashAvatar(data.alias,updatedAlias.dataValues.address), 64);
-            delete updatedAlias.dataValues.codes;
-            delete updatedAlias.dataValues.email;
-            delete updatedAlias.dataValues.seed;
-            delete updatedAlias.dataValues.addressRegistered;
-            delete updatedAlias.dataValues.phoneRegistered;
-            resolve(updatedAlias.dataValues);
-          })
-          .catch((err) => { reject(err); });
         }
       })
       .catch((err) => { reject(err); });
