@@ -16,6 +16,9 @@ const twilio = require('twilio');
 const moment = require('moment');
 const signature = require('./signature');
 const Sequelize = require('sequelize');
+const sgMail = require('@sendgrid/mail');
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+sgMail.setSubstitutionWrappers('{{', '}}');
 const Op = Sequelize.Op;
 const CodeService = require('./code');
 let client = new twilio(config.twilioSID, config.twilioAuthToken);
@@ -23,14 +26,27 @@ let methods = {};
 
 const encryptEmail = (data) => {
   if (data) {
-    var cipher = crypto.createCipher('aes-256-cbc', config.privateKey);
-    var crypted = cipher.update(data, 'utf-8', 'hex');
+    let cipher = crypto.createCipher('aes-256-cbc', config.privateKey);
+    let crypted = cipher.update(data, 'utf-8', 'hex');
     crypted += cipher.final('hex');
     return crypted;
   } else {
     return "";
   }
 };
+
+const decryptEmail = (data) => {
+  let decipher = "";
+  let decrypted = "";
+  try {
+    decipher = crypto.createDecipher('aes-256-cbc', config.privateKey);
+    decrypted = decipher.update(data, 'hex', 'utf-8');
+    decrypted += decipher.final('utf-8');
+  } catch (e) {
+    console.log(e);
+  }
+  return decrypted;
+}
 
 const hashAvatar = (alias,address) => {
   return crypto.createHmac('sha256', config.privateKey).update(alias+address).digest('hex');
@@ -606,6 +622,75 @@ methods.registerPhone = (data) => {
         }
       })
       .catch((err) => { reject(err); });
+  });
+};
+
+methods.regenerateSeed = (data) => {
+  return new Promise((resolve, reject) => {
+    if (!data.alias) {
+      reject('No alias provided');
+    }
+    if (typeof data.alias !== 'string') {
+      reject('Invalid alias provided');
+    }
+    if (!letterRegex.test(data.alias.charAt(0))) {
+      //Not a valid alias is this a valid phone number?
+      if (!numberRegex.test(data.alias)) {
+        //Not a valid phone alias
+        reject('Invalid alias format: must be E164 phone number or must start with a Unicode Letter');
+      }
+    } else if (!lnRegex.test(data.alias)) {
+      reject('Invalid alias format: must start with a Unicode Letter & only container unicode letters or symbols');
+    }
+    try {
+      models.alias
+        .findOne({
+          where: {
+            $or: [
+              {
+                alias: data.alias.toLowerCase()
+              },
+              {
+                alias: crypto.createHmac('sha256', config.privateKey).update(data.alias.toLowerCase()).digest('hex')
+              }
+            ]
+          }
+        })
+        .then((alias) => {
+          if (signature.verify(data.signature, [data.alias.toLowerCase(), alias.address], alias.address) === true) {
+            crypto.randomBytes(8, (err, buf) => {
+              if (err) reject(err);
+              //Seed is always regenerated on email and can't be replayed!
+              alias.seed = crypto.createHmac('sha256', config.privateKey).update(buf.toString('hex')).digest('hex');
+              alias.save()
+              .then((updatedAlias) => {
+                //Send Email
+                const msg = {
+                  to: decryptEmail(updatedAlias.dataValues.email),
+                  from: 'support@getcanoe.io',
+                  subject: 'Alias Seed Reset',
+                  text: `New Seed is: ${updatedAlias.dataValues.seed}`,
+                  html: `New Seed is: ${updatedAlias.dataValues.seed}`,
+                  templateId: '04764895-7da4-4737-b7eb-7342e8187d34',
+                  substitutions: {
+                    seed: updatedAlias.dataValues.seed
+                  }
+                };
+                sgMail.send(msg);
+                resolve();
+              })
+              .catch((err) => { reject(err); });
+            });
+          } else {
+            reject('Could not verify signature');
+          }
+        })
+        .catch((err) => {
+          reject(err);
+        });
+    } catch(err) {
+      reject('Invalid Alias Seed');
+    }
   });
 };
 

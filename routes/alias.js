@@ -171,4 +171,25 @@ router.post('/delete', (req, res) => {
     });
 });
 
+router.post('/reset', (req, res) => {
+  Alias
+    .regenerateSeed(req.body)
+    .then(() => {
+      res
+        .status(200)
+        .json({
+          'status': 'SUCCESS',
+          'message': 'Successfully sent email to the associated email address'
+        });
+    })
+    .catch((err) => {
+      res
+        .status(422)
+        .json({
+          'status': 'ERROR',
+          'message': err
+        });
+    });
+});
+
 module.exports = router;
