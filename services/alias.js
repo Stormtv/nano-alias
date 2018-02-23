@@ -100,7 +100,7 @@ methods.create = (data) => {
       reject('Invalid signature provided');
     }
     data.addressRegistered = false;
-    if (signature.verify(data.signature, [data.alias.toLowerCase(), data.address], data.address) {
+    if (signature.verify(data.signature, [data.alias.toLowerCase(), data.address], data.address)) {
       data.addressRegistered = true;
     } else {
       reject(`Couldn't Verify Signature`);
