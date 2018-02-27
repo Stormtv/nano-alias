@@ -165,7 +165,7 @@ methods.create = (data) => {
                           from: config.twilioPhoneNumber
                       })
                       .then((message) => {
-                        alias.dataValues.avatar = jdenticon.toSvg(hashAvatar(currentAlias,alias.dataValues.address), 64);
+                        alias.dataValues.avatar = jdenticon.toSvg(hashAvatar(currentAlias,alias.dataValues.address), 40);
                         alias.dataValues.alias = currentAlias;
                         delete alias.dataValues.email;
                         resolve(alias.dataValues);
@@ -174,7 +174,7 @@ methods.create = (data) => {
                         return reject(err);
                       });
                     } else {
-                      alias.dataValues.avatar = jdenticon.toSvg(hashAvatar(currentAlias,alias.dataValues.address), 64);
+                      alias.dataValues.avatar = jdenticon.toSvg(hashAvatar(currentAlias,alias.dataValues.address), 40);
                       alias.dataValues.alias = currentAlias;
                       delete alias.dataValues.email;
                       resolve(alias.dataValues);
@@ -184,7 +184,7 @@ methods.create = (data) => {
                     return reject(err);
                   });
                 } else {
-                  alias.dataValues.avatar = jdenticon.toSvg(hashAvatar(currentAlias,alias.dataValues.address), 64);
+                  alias.dataValues.avatar = jdenticon.toSvg(hashAvatar(currentAlias,alias.dataValues.address), 40);
                   alias.dataValues.alias = currentAlias;
                   delete alias.dataValues.email;
                   delete alias.dataValues.phoneRegistered;
@@ -389,7 +389,7 @@ methods.edit = (data) => {
                           from: config.twilioPhoneNumber
                       })
                       .then((message) => {
-                        updatedAlias.dataValues.avatar = jdenticon.toSvg(hashAvatar(currentAlias,updatedAlias.dataValues.address), 64);
+                        updatedAlias.dataValues.avatar = jdenticon.toSvg(hashAvatar(currentAlias,updatedAlias.dataValues.address), 40);
                         updatedAlias.dataValues.alias = currentAlias;
                         delete updatedAlias.dataValues.email;
                         resolve(updatedAlias.dataValues);
@@ -398,7 +398,7 @@ methods.edit = (data) => {
                         return reject(err);
                       });
                     } else {
-                      updatedAlias.dataValues.avatar = jdenticon.toSvg(hashAvatar(currentAlias,updatedAlias.dataValues.address), 64);
+                      updatedAlias.dataValues.avatar = jdenticon.toSvg(hashAvatar(currentAlias,updatedAlias.dataValues.address), 40);
                       updatedAlias.dataValues.alias = currentAlias;
                       delete updatedAlias.dataValues.email;
                       resolve(updatedAlias.dataValues);
@@ -409,7 +409,7 @@ methods.edit = (data) => {
                   });
                 } else {
                   updatedAlias.dataValues.alias = currentAlias;
-                  updatedAlias.dataValues.avatar = jdenticon.toSvg(hashAvatar(currentAlias,updatedAlias.dataValues.address), 64);
+                  updatedAlias.dataValues.avatar = jdenticon.toSvg(hashAvatar(currentAlias,updatedAlias.dataValues.address), 40);
                   delete updatedAlias.dataValues.phoneRegistered;
                   delete updatedAlias.dataValues.email;
                   resolve(updatedAlias.dataValues);
@@ -463,7 +463,7 @@ methods.find = (aliasName) => {
         }
         let result = alias.dataValues;
         result.alias = aliasName.toLowerCase();
-        result.avatar = jdenticon.toSvg(hashAvatar(aliasName.toLowerCase(),result.address), 64);
+        result.avatar = jdenticon.toSvg(hashAvatar(aliasName.toLowerCase(),result.address), 40);
         delete result.email;
         delete result.seed;
         delete result.addressRegistered;
@@ -479,7 +479,7 @@ methods.getAvatar = (data) => {
     if (!data.alias) {
       return reject('No alias was provided');
     }
-    let size = 64;
+    let size = 40;
     if (data.size) {
       size = data.size;
     }
@@ -545,7 +545,7 @@ methods.findAll = (data) => {
         let results = [];
         aliases.forEach((alias) => {
           let result = alias.dataValues;
-          result.avatar = jdenticon.toSvg(hashAvatar(result.alias,result.address), 64);
+          result.avatar = jdenticon.toSvg(hashAvatar(result.alias,result.address), 40);
           delete result.email;
           delete result.seed;
           delete result.addressRegistered;
@@ -599,7 +599,7 @@ methods.registerPhone = (data) => {
               return alias.save()
               .then((updatedAlias) => {
                 updatedAlias.dataValues.alias = data.alias;
-                updatedAlias.dataValues.avatar = jdenticon.toSvg(hashAvatar(data.alias,updatedAlias.dataValues.address), 64);
+                updatedAlias.dataValues.avatar = jdenticon.toSvg(hashAvatar(data.alias,updatedAlias.dataValues.address), 40);
                 delete updatedAlias.dataValues.codes;
                 delete updatedAlias.dataValues.email;
                 delete updatedAlias.dataValues.seed;

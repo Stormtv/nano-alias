@@ -27,7 +27,7 @@ methods.find = (address) => {
         let results = [];
         aliases.forEach((alias) => {
           let result = alias.dataValues;
-          result.avatar = jdenticon.toSvg(hashAvatar(result.alias,result.address), 64);
+          result.avatar = jdenticon.toSvg(hashAvatar(result.alias,result.address), 40);
           delete result.email;
           delete result.seed;
           delete result.phoneRegistered;
