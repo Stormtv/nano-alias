@@ -66,65 +66,65 @@ const random = (howMany, chars) => {
 methods.create = (data) => {
   return new Promise((resolve, reject) => {
     if (!data.address) {
-      reject('No address provided');
+      return reject('No address provided');
     }
     if (typeof data.address !== 'string' && xrbRegex.test(data.address)) {
-      reject('Invalid address provided');
+      return reject('Invalid address provided');
     }
     if (!data.email) {
-      reject('No email provided');
+      return reject('No email provided');
     }
     if (typeof data.email !== 'string') {
-      reject('Invalid email provided');
+      return reject('Invalid email provided');
     }
     if (!data.listed) {
       data.listed = false;
     }
     if (data.listed && typeof data.listed === 'string' &&
       !(data.listed === "true" || data.listed === "false")) {
-      reject('Invalid listed provided');
+      return reject('Invalid listed provided');
     } else {
       data.listed = data.listed == 'true';
     }
     if (!data.alias) {
-      reject('No alias provided');
+      return reject('No alias provided');
     }
     if (typeof data.alias !== 'string') {
-      reject('Invalid alias provided');
+      return reject('Invalid alias provided');
     }
     data.phoneRegistered = true;
     if (!letterRegex.test(data.alias.charAt(0))) {
       //Not a valid alias is this a valid phone number?
       if (!numberRegex.test(data.alias)) {
         //Not a valid phone alias
-        reject('Invalid alias format: must be E164 phone number or must start with a Unicode Letter');
+        return reject('Invalid alias format: must be E164 phone number or must start with a Unicode Letter');
       } else {
         //Valid phone number - Never List Phone Numbers
         data.phoneRegistered = false;
         data.listed = false;
       }
     } else if (!lnRegex.test(data.alias)) {
-      reject('Invalid alias format: must start with a Unicode Letter & only contain unicode letters or symbols');
+      return reject('Invalid alias format: must start with a Unicode Letter & only contain unicode letters or symbols');
     }
     if (data.alias.length < 4) {
-      reject('Aliases must be at least 4 characters in length aliases of 3 character and less are reserved');
+      return reject('Aliases must be at least 4 characters in length aliases of 3 character and less are reserved');
     }
     if (!data.signature) {
-      reject('No signature provided');
+      return reject('No signature provided');
     }
     if (typeof data.signature !== 'string') {
-      reject('Invalid signature provided');
+      return reject('Invalid signature provided');
     }
     data.addressRegistered = false;
     if (signature.verify(data.signature, [data.alias.toLowerCase(), data.address], data.address)) {
       data.addressRegistered = true;
     } else {
-      reject(`Couldn't Verify Signature`);
+      return reject(`Couldn't Verify Signature`);
     }
     methods
       .find(data.alias.toLowerCase())
       .then((alias) => {
-        reject(`${data.alias} has already been taken!`);
+        return reject(`${data.alias} has already been taken!`);
       })
       .catch((err) => {
         if (err === 'Could not find alias') {
@@ -135,7 +135,7 @@ methods.create = (data) => {
             data.alias = crypto.createHmac('sha256', config.privateKey).update(data.alias).digest('hex');
           }
           crypto.randomBytes(8, (err, buf) => {
-            if (err) reject(err);
+            if (err) return reject(err);
             let formData = {
               alias: data.alias.toLowerCase(),
               address: data.address,
@@ -171,7 +171,7 @@ methods.create = (data) => {
                         resolve(alias.dataValues);
                       })
                       .catch((err) => {
-                        reject(err);
+                        return reject(err);
                       });
                     } else {
                       alias.dataValues.avatar = jdenticon.toSvg(hashAvatar(currentAlias,alias.dataValues.address), 64);
@@ -181,7 +181,7 @@ methods.create = (data) => {
                     }
                   })
                   .catch((err) => {
-                    reject(err);
+                    return reject(err);
                   });
                 } else {
                   alias.dataValues.avatar = jdenticon.toSvg(hashAvatar(currentAlias,alias.dataValues.address), 64);
@@ -192,11 +192,11 @@ methods.create = (data) => {
                 }
               })
               .catch((err) => {
-                reject(err);
+                return reject(err);
               });
           });
         } else {
-          reject(err);
+          return reject(err);
         }
       });
   });
@@ -205,25 +205,25 @@ methods.create = (data) => {
 methods.delete = (data) => {
   return new Promise((resolve, reject) => {
     if (!data.alias) {
-      reject('No alias provided');
+      return reject('No alias provided');
     }
     if (typeof data.alias !== 'string') {
-      reject('Invalid alias provided');
+      return reject('Invalid alias provided');
     }
     if (!letterRegex.test(data.alias.charAt(0))) {
       //Not a valid alias is this a valid phone number?
       if (!numberRegex.test(data.alias)) {
         //Not a valid phone alias
-        reject('Invalid alias format: must be E164 phone number or must start with a Unicode Letter');
+        return reject('Invalid alias format: must be E164 phone number or must start with a Unicode Letter');
       }
     } else if (!lnRegex.test(data.alias)) {
-      reject('Invalid alias format: must start with a Unicode Letter & only container unicode letters or symbols');
+      return reject('Invalid alias format: must start with a Unicode Letter & only container unicode letters or symbols');
     }
     if (!data.privateSignature) {
-      reject('No private signature provided');
+      return reject('No private signature provided');
     }
     if (typeof data.privateSignature !== 'string') {
-      reject('Invalid private signature provided');
+      return reject('Invalid private signature provided');
     }
     try {
       models.alias
@@ -245,17 +245,17 @@ methods.delete = (data) => {
               .then(() => {
                 resolve('Deleted ' + data.alias.toLowerCase());
               })
-              .catch((err) => { reject(err); });
+              .catch((err) => { return reject(err); });
           } else {
-            reject('Could not verify privateSignature');
+            return reject('Could not verify privateSignature');
           }
           resolve(alias.dataValues);
         })
         .catch((err) => {
-          reject(err);
+          return reject(err);
         });
     } catch(err) {
-      reject('Invalid Alias Seed');
+      return reject('Invalid Alias Seed');
     }
   });
 };
@@ -263,31 +263,31 @@ methods.delete = (data) => {
 methods.edit = (data) => {
   return new Promise((resolve, reject) => {
     if (!data.alias) {
-      reject('No alias provided');
+      return reject('No alias provided');
     }
     if (typeof data.alias !== 'string') {
-      reject('Invalid alias provided');
+      return reject('Invalid alias provided');
     }
     if (!letterRegex.test(data.alias.charAt(0))) {
       //Not a valid alias is this a valid phone number?
       if (!numberRegex.test(data.alias)) {
         //Not a valid phone alias
-        reject('Invalid alias format: must be E164 phone number or must start with a Unicode Letter');
+        return reject('Invalid alias format: must be E164 phone number or must start with a Unicode Letter');
       }
     } else if (!lnRegex.test(data.alias)) {
-      reject('Invalid alias format: must start with a Unicode Letter & only container unicode letters or symbols');
+      return reject('Invalid alias format: must start with a Unicode Letter & only container unicode letters or symbols');
     }
     if (!data.privateSignature) {
-      reject('No private signature provided');
+      return reject('No private signature provided');
     }
     if (typeof data.privateSignature !== 'string') {
-      reject('Invalid private signature provided');
+      return reject('Invalid private signature provided');
     }
     if (!data.address) {
-      reject('No address provided');
+      return reject('No address provided');
     }
     if (typeof data.address !== 'string' && xrbRegex.test(data.address)) {
-      reject('Invalid address provided');
+      return reject('Invalid address provided');
     }
     try {
       models.alias
@@ -367,7 +367,7 @@ methods.edit = (data) => {
             }
 
             crypto.randomBytes(8, (err, buf) => {
-              if (err) reject(err);
+              if (err) return reject(err);
               //Verification is always removed on edit
               alias.verified = false;
               //Seed is always regenerated after any edits so any future privateSignatures are different and can't be replayed!
@@ -395,7 +395,7 @@ methods.edit = (data) => {
                         resolve(updatedAlias.dataValues);
                       })
                       .catch((err) => {
-                        reject(err);
+                        return reject(err);
                       });
                     } else {
                       updatedAlias.dataValues.avatar = jdenticon.toSvg(hashAvatar(currentAlias,updatedAlias.dataValues.address), 64);
@@ -405,7 +405,7 @@ methods.edit = (data) => {
                     }
                   })
                   .catch((err) => {
-                    reject(err);
+                    return reject(err);
                   });
                 } else {
                   updatedAlias.dataValues.alias = currentAlias;
@@ -415,17 +415,17 @@ methods.edit = (data) => {
                   resolve(updatedAlias.dataValues);
                 }
               })
-              .catch((err) => { reject(err); });
+              .catch((err) => { return reject(err); });
             });
           } else {
-            reject('Could not verify privateSignature');
+            return reject('Could not verify privateSignature');
           }
         })
         .catch((err) => {
-          reject(err);
+          return reject(err);
         });
     } catch(err) {
-      reject('Invalid Alias Seed');
+      return reject('Invalid Alias Seed');
     }
   });
 };
@@ -433,7 +433,7 @@ methods.edit = (data) => {
 methods.find = (aliasName) => {
   return new Promise((resolve, reject) => {
     if (!aliasName) {
-      reject('No alias was provided');
+      return reject('No alias was provided');
     }
     models.alias
       .findOne({
@@ -449,16 +449,16 @@ methods.find = (aliasName) => {
         }
       })
       .then((alias) => {
-        if (!alias) { reject('Could not find alias'); }
+        if (!alias) { return reject('Could not find alias'); }
         if (alias.dataValues.phoneRegistered === false) {
           if (moment().diff(moment(alias.dataValues.updatedAt), "minutes") >= 10) {
             alias.destroy()
               .then(() => {
-                reject('Could not find alias');
+                return reject('Could not find alias');
               })
-              .catch((err) => { reject(err); });
+              .catch((err) => { return reject(err); });
           } else {
-            reject(`${aliasName.toLowerCase()} is still pending registration for ${10 - moment().diff(moment(alias.dataValues.updatedAt), "minutes")} minutes`);
+            return reject(`${aliasName.toLowerCase()} is still pending registration for ${10 - moment().diff(moment(alias.dataValues.updatedAt), "minutes")} minutes`);
           }
         }
         let result = alias.dataValues;
@@ -470,14 +470,14 @@ methods.find = (aliasName) => {
         delete result.phoneRegistered;
         resolve(result);
       })
-      .catch((err) => { reject(err); });
+      .catch((err) => { return reject(err); });
   });
 };
 
 methods.getAvatar = (data) => {
   return new Promise((resolve, reject) => {
     if (!data.alias) {
-      reject('No alias was provided');
+      return reject('No alias was provided');
     }
     let size = 64;
     if (data.size) {
@@ -503,7 +503,7 @@ methods.getAvatar = (data) => {
         }
       })
       .then((alias) => {
-        if (!alias) { reject('Could not find alias'); }
+        if (!alias) { return reject('Could not find alias'); }
         if (svg === true) {
           resolve(jdenticon.toSvg(hashAvatar(data.alias.toLowerCase(),alias.dataValues.address), parseInt(data.size)));
         } else {
@@ -513,7 +513,7 @@ methods.getAvatar = (data) => {
           resolve(datauri.base64);
         }
       })
-      .catch((err) => { reject(err); });
+      .catch((err) => { return reject(err); });
   });
 };
 
@@ -541,7 +541,7 @@ methods.findAll = (data) => {
         }
       )
       .then((aliases) => {
-        if (!aliases) { reject('Could not get aliases'); }
+        if (!aliases) { return reject('Could not get aliases'); }
         let results = [];
         aliases.forEach((alias) => {
           let result = alias.dataValues;
@@ -554,17 +554,17 @@ methods.findAll = (data) => {
         });
         resolve(results);
       })
-      .catch((err) => { reject(err); });
+      .catch((err) => { return reject(err); });
   });
 };
 
 methods.registerPhone = (data) => {
   return new Promise((resolve, reject) => {
     if (!data.alias) {
-      reject('No alias provided');
+      return reject('No alias provided');
     }
     if (!data.verifyCode) {
-      reject('No verification code was provided');
+      return reject('No verification code was provided');
     }
     models.alias
       .findOne({
@@ -587,7 +587,7 @@ methods.registerPhone = (data) => {
         }
       })
       .then((alias) => {
-        if (!alias) { reject('Could not find an alias with provided alias and verfication code'); }
+        if (!alias) { return reject('Could not find an alias with provided alias and verfication code'); }
         //TODO Should we delete codes on invalid registration and force a new registration?
         //Could open a vulnerability with bruteforcing registration codes?
         if (alias.codes.length > 0 && moment().diff(moment(alias.codes[0].createdAt), "minutes") < 10) {
@@ -607,40 +607,40 @@ methods.registerPhone = (data) => {
                 delete updatedAlias.dataValues.phoneRegistered;
                 resolve(updatedAlias.dataValues);
               })
-              .catch((err) => { reject(err); });
+              .catch((err) => { return reject(err); });
             })
-            .catch((err) => { reject(err); });
+            .catch((err) => { return reject(err); });
         } else {
           if (alias.codes.length > 0) {
             alias.codes[0].destroy()
               .then((destroyedCode) => {
                 delete alias.dataValues.codes;
-                reject(`The verification code has expired for ${data.alias}`);
+                return reject(`The verification code has expired for ${data.alias}`);
               })
-              .catch((err) => { reject(err); });
+              .catch((err) => { return reject(err); });
           }
         }
       })
-      .catch((err) => { reject(err); });
+      .catch((err) => { return reject(err); });
   });
 };
 
 methods.regenerateSeed = (data) => {
   return new Promise((resolve, reject) => {
     if (!data.alias) {
-      reject('No alias provided');
+      return reject('No alias provided');
     }
     if (typeof data.alias !== 'string') {
-      reject('Invalid alias provided');
+      return reject('Invalid alias provided');
     }
     if (!letterRegex.test(data.alias.charAt(0))) {
       //Not a valid alias is this a valid phone number?
       if (!numberRegex.test(data.alias)) {
         //Not a valid phone alias
-        reject('Invalid alias format: must be E164 phone number or must start with a Unicode Letter');
+        return reject('Invalid alias format: must be E164 phone number or must start with a Unicode Letter');
       }
     } else if (!lnRegex.test(data.alias)) {
-      reject('Invalid alias format: must start with a Unicode Letter & only container unicode letters or symbols');
+      return reject('Invalid alias format: must start with a Unicode Letter & only container unicode letters or symbols');
     }
     try {
       models.alias
@@ -659,7 +659,7 @@ methods.regenerateSeed = (data) => {
         .then((alias) => {
           if (signature.verify(data.signature, [data.alias.toLowerCase(), alias.address], alias.address) === true) {
             crypto.randomBytes(8, (err, buf) => {
-              if (err) reject(err);
+              if (err) return reject(err);
               //Seed is always regenerated on email and can't be replayed!
               alias.seed = crypto.createHmac('sha256', config.privateKey).update(buf.toString('hex')).digest('hex');
               alias.save()
@@ -679,17 +679,17 @@ methods.regenerateSeed = (data) => {
                 sgMail.send(msg);
                 resolve();
               })
-              .catch((err) => { reject(err); });
+              .catch((err) => { return reject(err); });
             });
           } else {
-            reject('Could not verify signature');
+            return reject('Could not verify signature');
           }
         })
         .catch((err) => {
-          reject(err);
+          return reject(err);
         });
     } catch(err) {
-      reject('Invalid Alias Seed');
+      return reject('Invalid Alias Seed');
     }
   });
 };

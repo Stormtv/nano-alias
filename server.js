@@ -23,6 +23,8 @@ app.use(function (req, res, next) {
               colog.color(req.headers['x-forwarded-for'] || req.connection.remoteAddress,'cyan')+
               ' - '+colog.inverse(req.method)+' - '+colog.bold(req.url));
   }
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
 });
 
