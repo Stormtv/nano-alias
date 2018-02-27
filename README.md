@@ -18,11 +18,14 @@ Squatting is one of the primary concerns that everyone has with Nano Alias. When
 ##### Privacy & Verification
 When publishing your alias you have an option called listed. Listed means that people will be able to search for your alias using our search API. This can be helpful if you want people to be able to see your alias in a typeahead UI. When marked as unlisted people will only be able to find you if they know your entire alias. All phone number aliases are unlisted and hashed in the database for security reasons. Additionally, we have implemented a feature similar to twitters verification that will allow us to verify aliases that belong to prominent businesses or people.
 
-##### Editing
-When you create an alias you are given a seed that will allow you to edit your address, email, or event change your alias. Any time you edit or create an alias an avatar is generated. This will act as a visual representation so that everytime you send Nano to an alias the avatar shouldn't have changed and if it has then that means the the user has edited the receiving address and you should be sure it is going to the right location.
+##### Signatures & Editing
+When creating your alias you must send a signature or your alias and nano address that are signed with your private key. This ensures that every alias that is registered belongs to the address it is registered under. This signature is stored in the database and is returned with every address lookup which allows the client to verify the integrity of the data they are being sent. When you wish to edit or delete your alias you must provide a Private Signature which is a signature signed by your private key consiting of your alias, nano address, and the seed that was provided when you created your alias. Everytime you edit your alias your seed will change preventing replaying the same signature. Any time you edit or create an alias an avatar is generated. This will act as a visual representation so that everytime you send Nano to an alias the avatar shouldn't have changed and if it has then that means the the user has edited the receiving address and you should be sure it is going to the right location.
 
 ![Example Avatar](https://i.imgur.com/QCaKh4f.png
  "Example Avatar")
+ 
+ ##### Forgotten or lost my Alias Seed
+ If you forget or lose your alias seed you can request to have it sent to your associated email.
 
 # Integrating & Contributing to Nano Alias
 If you are interested in integrating Nano Alias into your application see our documentation here: [Documentation](https://documenter.getpostman.com/view/2206404/nano-alias/RVfsFYHj)
