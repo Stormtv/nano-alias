@@ -27,7 +27,7 @@ methods.find = (address) => {
         let results = [];
         aliases.forEach((alias) => {
           let result = alias.dataValues;
-          result.avatar = jdenticon.toPng(hashAvatar(result.alias,result.address), 40);
+          result.avatar = jdenticon.toPng(hashAvatar(result.alias,result.address), 70);
           const datauri = new Datauri();
           datauri.format('.png', result.avatar);
           result.avatar = datauri.base64;

@@ -165,7 +165,7 @@ methods.create = (data) => {
                           from: config.twilioPhoneNumber
                       })
                       .then((message) => {
-                        alias.dataValues.avatar = jdenticon.toPng(hashAvatar(currentAlias,alias.dataValues.address), 40);
+                        alias.dataValues.avatar = jdenticon.toPng(hashAvatar(currentAlias,alias.dataValues.address), 70);
                         const datauri = new Datauri();
                         datauri.format('.png', alias.dataValues.avatar);
                         alias.dataValues.avatar = datauri.base64;
@@ -177,7 +177,7 @@ methods.create = (data) => {
                         return reject(err);
                       });
                     } else {
-                      alias.dataValues.avatar = jdenticon.toPng(hashAvatar(currentAlias,alias.dataValues.address), 40);
+                      alias.dataValues.avatar = jdenticon.toPng(hashAvatar(currentAlias,alias.dataValues.address), 70);
                       const datauri = new Datauri();
                       datauri.format('.png', alias.dataValues.avatar);
                       alias.dataValues.avatar = datauri.base64;
@@ -190,7 +190,7 @@ methods.create = (data) => {
                     return reject(err);
                   });
                 } else {
-                  alias.dataValues.avatar = jdenticon.toPng(hashAvatar(currentAlias,alias.dataValues.address), 40);
+                  alias.dataValues.avatar = jdenticon.toPng(hashAvatar(currentAlias,alias.dataValues.address), 70);
                   const datauri = new Datauri();
                   datauri.format('.png', alias.dataValues.avatar);
                   alias.dataValues.avatar = datauri.base64;
@@ -398,7 +398,7 @@ methods.edit = (data) => {
                           from: config.twilioPhoneNumber
                       })
                       .then((message) => {
-                        updatedAlias.dataValues.avatar = jdenticon.toPng(hashAvatar(currentAlias,updatedAlias.dataValues.address), 40);
+                        updatedAlias.dataValues.avatar = jdenticon.toPng(hashAvatar(currentAlias,updatedAlias.dataValues.address), 70);
                         const datauri = new Datauri();
                         datauri.format('.png', updatedAlias.dataValues.avatar);
                         updatedAlias.dataValues.avatar = datauri.base64;
@@ -410,7 +410,7 @@ methods.edit = (data) => {
                         return reject(err);
                       });
                     } else {
-                      updatedAlias.dataValues.avatar = jdenticon.toPng(hashAvatar(currentAlias,updatedAlias.dataValues.address), 40);
+                      updatedAlias.dataValues.avatar = jdenticon.toPng(hashAvatar(currentAlias,updatedAlias.dataValues.address), 70);
                       const datauri = new Datauri();
                       datauri.format('.png', updatedAlias.dataValues.avatar);
                       updatedAlias.dataValues.avatar = datauri.base64;
@@ -424,7 +424,7 @@ methods.edit = (data) => {
                   });
                 } else {
                   updatedAlias.dataValues.alias = currentAlias;
-                  updatedAlias.dataValues.avatar = jdenticon.toPng(hashAvatar(currentAlias,updatedAlias.dataValues.address), 40);
+                  updatedAlias.dataValues.avatar = jdenticon.toPng(hashAvatar(currentAlias,updatedAlias.dataValues.address), 70);
                   const datauri = new Datauri();
                   datauri.format('.png', updatedAlias.dataValues.avatar);
                   updatedAlias.dataValues.avatar = datauri.base64;
@@ -481,7 +481,7 @@ methods.find = (aliasName) => {
         }
         let result = alias.dataValues;
         result.alias = aliasName.toLowerCase();
-        result.avatar = jdenticon.toPng(hashAvatar(aliasName.toLowerCase(),result.address), 40);
+        result.avatar = jdenticon.toPng(hashAvatar(aliasName.toLowerCase(),result.address), 70);
         const datauri = new Datauri();
         datauri.format('.png', result.avatar);
         result.avatar = datauri.base64;
@@ -500,7 +500,7 @@ methods.getAvatar = (data) => {
     if (!data.alias) {
       return reject('No alias was provided');
     }
-    let size = 40;
+    let size = 70;
     if (data.size) {
       size = data.size;
     }
@@ -566,7 +566,7 @@ methods.findAll = (data) => {
         let results = [];
         aliases.forEach((alias) => {
           let result = alias.dataValues;
-          result.avatar = jdenticon.toPng(hashAvatar(result.alias,result.address), 40);
+          result.avatar = jdenticon.toPng(hashAvatar(result.alias,result.address), 70);
           const datauri = new Datauri();
           datauri.format('.png', result.avatar);
           result.avatar = datauri.base64;
@@ -623,7 +623,7 @@ methods.registerPhone = (data) => {
               return alias.save()
               .then((updatedAlias) => {
                 updatedAlias.dataValues.alias = data.alias;
-                updatedAlias.dataValues.avatar = jdenticon.toPng(hashAvatar(data.alias,updatedAlias.dataValues.address), 40);
+                updatedAlias.dataValues.avatar = jdenticon.toPng(hashAvatar(data.alias,updatedAlias.dataValues.address), 70);
                 const datauri = new Datauri();
                 datauri.format('.png', updatedAlias.dataValues.avatar);
                 updatedAlias.dataValues.avatar = datauri.base64;
