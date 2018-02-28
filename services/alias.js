@@ -166,6 +166,9 @@ methods.create = (data) => {
                       })
                       .then((message) => {
                         alias.dataValues.avatar = jdenticon.toPng(hashAvatar(currentAlias,alias.dataValues.address), 40);
+                        const datauri = new Datauri();
+                        datauri.format('.png', alias.dataValues.avatar);
+                        alias.dataValues.avatar = datauri.base64;
                         alias.dataValues.alias = currentAlias;
                         delete alias.dataValues.email;
                         resolve(alias.dataValues);
@@ -175,6 +178,9 @@ methods.create = (data) => {
                       });
                     } else {
                       alias.dataValues.avatar = jdenticon.toPng(hashAvatar(currentAlias,alias.dataValues.address), 40);
+                      const datauri = new Datauri();
+                      datauri.format('.png', alias.dataValues.avatar);
+                      alias.dataValues.avatar = datauri.base64;
                       alias.dataValues.alias = currentAlias;
                       delete alias.dataValues.email;
                       resolve(alias.dataValues);
@@ -185,6 +191,9 @@ methods.create = (data) => {
                   });
                 } else {
                   alias.dataValues.avatar = jdenticon.toPng(hashAvatar(currentAlias,alias.dataValues.address), 40);
+                  const datauri = new Datauri();
+                  datauri.format('.png', alias.dataValues.avatar);
+                  alias.dataValues.avatar = datauri.base64;
                   alias.dataValues.alias = currentAlias;
                   delete alias.dataValues.email;
                   delete alias.dataValues.phoneRegistered;
@@ -390,6 +399,9 @@ methods.edit = (data) => {
                       })
                       .then((message) => {
                         updatedAlias.dataValues.avatar = jdenticon.toPng(hashAvatar(currentAlias,updatedAlias.dataValues.address), 40);
+                        const datauri = new Datauri();
+                        datauri.format('.png', updatedAlias.dataValues.avatar);
+                        updatedAlias.dataValues.avatar = datauri.base64;
                         updatedAlias.dataValues.alias = currentAlias;
                         delete updatedAlias.dataValues.email;
                         resolve(updatedAlias.dataValues);
@@ -399,6 +411,9 @@ methods.edit = (data) => {
                       });
                     } else {
                       updatedAlias.dataValues.avatar = jdenticon.toPng(hashAvatar(currentAlias,updatedAlias.dataValues.address), 40);
+                      const datauri = new Datauri();
+                      datauri.format('.png', updatedAlias.dataValues.avatar);
+                      updatedAlias.dataValues.avatar = datauri.base64;
                       updatedAlias.dataValues.alias = currentAlias;
                       delete updatedAlias.dataValues.email;
                       resolve(updatedAlias.dataValues);
@@ -410,6 +425,9 @@ methods.edit = (data) => {
                 } else {
                   updatedAlias.dataValues.alias = currentAlias;
                   updatedAlias.dataValues.avatar = jdenticon.toPng(hashAvatar(currentAlias,updatedAlias.dataValues.address), 40);
+                  const datauri = new Datauri();
+                  datauri.format('.png', updatedAlias.dataValues.avatar);
+                  updatedAlias.dataValues.avatar = datauri.base64;
                   delete updatedAlias.dataValues.phoneRegistered;
                   delete updatedAlias.dataValues.email;
                   resolve(updatedAlias.dataValues);
@@ -464,6 +482,9 @@ methods.find = (aliasName) => {
         let result = alias.dataValues;
         result.alias = aliasName.toLowerCase();
         result.avatar = jdenticon.toPng(hashAvatar(aliasName.toLowerCase(),result.address), 40);
+        const datauri = new Datauri();
+        datauri.format('.png', result.avatar);
+        result.avatar = datauri.base64;
         delete result.email;
         delete result.seed;
         delete result.addressRegistered;
@@ -546,6 +567,9 @@ methods.findAll = (data) => {
         aliases.forEach((alias) => {
           let result = alias.dataValues;
           result.avatar = jdenticon.toPng(hashAvatar(result.alias,result.address), 40);
+          const datauri = new Datauri();
+          datauri.format('.png', result.avatar);
+          result.avatar = datauri.base64;
           delete result.email;
           delete result.seed;
           delete result.addressRegistered;
@@ -600,6 +624,9 @@ methods.registerPhone = (data) => {
               .then((updatedAlias) => {
                 updatedAlias.dataValues.alias = data.alias;
                 updatedAlias.dataValues.avatar = jdenticon.toPng(hashAvatar(data.alias,updatedAlias.dataValues.address), 40);
+                const datauri = new Datauri();
+                datauri.format('.png', updatedAlias.dataValues.avatar);
+                updatedAlias.dataValues.avatar = datauri.base64;
                 delete updatedAlias.dataValues.codes;
                 delete updatedAlias.dataValues.email;
                 delete updatedAlias.dataValues.seed;

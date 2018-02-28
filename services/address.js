@@ -28,6 +28,9 @@ methods.find = (address) => {
         aliases.forEach((alias) => {
           let result = alias.dataValues;
           result.avatar = jdenticon.toPng(hashAvatar(result.alias,result.address), 40);
+          const datauri = new Datauri();
+          datauri.format('.png', result.avatar);
+          result.avatar = datauri.base64;
           delete result.email;
           delete result.seed;
           delete result.phoneRegistered;
