@@ -41,4 +41,3 @@ methods.find = (address) => {
 };
 
 module.exports = methods;
-toPng
