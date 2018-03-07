@@ -6,7 +6,8 @@ const bodyParser = require('body-parser');
 const colog = require('colog');
 const moment = require('moment');
 const models = require('./models');
-
+const schedule = require('node-schedule');
+const importer = require('./aliasImport');
 // Application config
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -56,4 +57,10 @@ models.alias.hasMany(models.code);
 models.sequelize.sync().then(function () {
   app.listen(config.system.port);
 });
+
+// schedule.scheduleJob('30 * * * *', function() {
+//   console.log("Importing");
+//   importer.importAliases();
+// });
+
 console.log('Listening on port: ' + config.system.port);

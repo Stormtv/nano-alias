@@ -211,6 +211,73 @@ methods.create = (data) => {
   });
 };
 
+methods.reserveAlias = (data) => {
+  return new Promise((resolve, reject) => {
+    if (!data.address) {
+      return reject('No address provided');
+    }
+    if (typeof data.address !== 'string' && xrbRegex.test(data.address)) {
+      return reject('Invalid address provided');
+    }
+    data.listed = true;
+    if (!data.alias) {
+      return reject('No alias provided');
+    }
+    if (typeof data.alias !== 'string') {
+      return reject('Invalid alias provided');
+    }
+    data.phoneRegistered = true;
+    if (!lnRegex.test(data.alias)) {
+      return reject('Invalid alias format: must start with a Unicode Letter & only contain unicode letters or symbols');
+    }
+    if (data.alias.length < 4) {
+      return reject('Aliases must be at least 4 characters in length aliases of 3 character and less are reserved');
+    }
+    data.addressRegistered = false;
+    methods
+      .find(data.alias.toLowerCase())
+      .then((alias) => {
+        return reject(`${data.alias} has already been taken!`);
+      })
+      .catch((err) => {
+        if (err === 'Could not find alias') {
+          let currentAlias = data.alias.toLowerCase();
+          data.alias = data.alias.toLowerCase();
+          data.email = encryptEmail("hello@getcanoe.io");
+          crypto.randomBytes(8, (err, buf) => {
+            if (err) return reject(err);
+            let formData = {
+              alias: data.alias.toLowerCase(),
+              address: data.address,
+              email: data.email,
+              seed: crypto.createHmac('sha256', config.privateKey).update(buf.toString('hex')).digest('hex'),
+              listed: data.listed,
+              addressRegistered: data.addressRegistered,
+              phoneRegistered: data.phoneRegistered
+            };
+            models.alias
+              .create(formData)
+              .then((alias) => {
+                alias.dataValues.avatar = jdenticon.toPng(hashAvatar(currentAlias,alias.dataValues.address), 70);
+                const datauri = new Datauri();
+                datauri.format('.png', alias.dataValues.avatar);
+                alias.dataValues.avatar = datauri.base64;
+                alias.dataValues.alias = currentAlias;
+                delete alias.dataValues.email;
+                delete alias.dataValues.phoneRegistered;
+                resolve(alias.dataValues);
+              })
+              .catch((err) => {
+                return reject(err);
+              });
+          });
+        } else {
+          return reject(err);
+        }
+      });
+  });
+};
+
 methods.delete = (data) => {
   return new Promise((resolve, reject) => {
     if (!data.alias) {
@@ -478,6 +545,9 @@ methods.find = (aliasName) => {
           } else {
             return reject(`${aliasName.toLowerCase()} is still pending registration for ${10 - moment().diff(moment(alias.dataValues.updatedAt), "minutes")} minutes`);
           }
+        }
+        if (alias.dataValues.addressRegistered === false) {
+          return reject(`${aliasName.toLowerCase()} has been reserved through nanode or by core, if you are the owner of this address and need help claiming it join our discord https://discord.gg/EJY7hVc`);
         }
         let result = alias.dataValues;
         result.alias = aliasName.toLowerCase();
