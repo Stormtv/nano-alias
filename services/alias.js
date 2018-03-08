@@ -7,6 +7,7 @@ const xrbRegex = /((?:xrb_[13][a-km-zA-HJ-NP-Z0-9]{59})|(?:nano_[13][a-km-zA-HJ-
 const XRegExp = require('xregexp');
 const letterRegex = XRegExp('^\\p{Ll}+$');
 const lnRegex = XRegExp('^(\\p{Ll}|\\pN)+$');
+const nanodeRegex = XRegExp('^(\\p{Ll}|\\pN|-|_)+$');
 const numberRegex = /^(\+[0-9]{1,3}|0)[0-9]{3}( ){0,1}[0-9]{7,8}\b/;
 const crypto = require('crypto');
 const jdenticon = require('jdenticon');
@@ -106,8 +107,8 @@ methods.create = (data) => {
     } else if (!lnRegex.test(data.alias)) {
       return reject('Invalid alias format: must start with a Unicode Letter & only contain unicode letters or symbols');
     }
-    if (data.alias.length < 4) {
-      return reject('Aliases must be at least 4 characters in length aliases of 3 character and less are reserved');
+    if (data.alias.length < 3) {
+      return reject('Aliases must be at least 3 characters in length aliases of 2 character and less are reserved');
     }
     if (!data.signature) {
       return reject('No signature provided');
@@ -227,11 +228,11 @@ methods.reserveAlias = (data) => {
       return reject('Invalid alias provided');
     }
     data.phoneRegistered = true;
-    if (!lnRegex.test(data.alias)) {
-      return reject('Invalid alias format: must start with a Unicode Letter & only contain unicode letters or symbols');
+    if (!nanodeRegex.test(data.alias)) {
+      return reject('Invalid nanode alias format: must start with a Unicode Letter & only contain unicode letters or symbols');
     }
-    if (data.alias.length < 4) {
-      return reject('Aliases must be at least 4 characters in length aliases of 3 character and less are reserved');
+    if (data.alias.length < 3) {
+      return reject('Aliases must be at least 3 characters in length aliases of 2 character and less are reserved');
     }
     data.addressRegistered = false;
     methods

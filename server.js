@@ -58,9 +58,8 @@ models.sequelize.sync().then(function () {
   app.listen(config.system.port);
 });
 
-// schedule.scheduleJob('30 * * * *', function() {
-//   console.log("Importing");
-//   importer.importAliases();
-// });
+schedule.scheduleJob('30 * * * *', function() {
+  importer.importAliases();
+});
 
 console.log('Listening on port: ' + config.system.port);
