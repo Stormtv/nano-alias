@@ -3,6 +3,7 @@ const xrbRegex = /((?:xrb_[13][a-km-zA-HJ-NP-Z0-9]{59})|(?:nano_[13][a-km-zA-HJ-
 const jdenticon = require("jdenticon");
 const config = require('../config.json');
 const crypto = require('crypto');
+const Datauri = require('datauri');
 const hashAvatar = (alias,address) => {
   return crypto.createHmac('sha256', config.privateKey).update(alias+address).digest('hex');
 };
