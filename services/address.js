@@ -23,7 +23,7 @@ methods.find = (address) => {
         }
       })
       .then((aliases) => {
-        if (!aliases) { return reject('Could not find any aliases with that address'); }
+        if (!aliases || aliases.length === 0) { return reject('Could not find any aliases with that address'); }
         let results = [];
         aliases.forEach((alias) => {
           let result = alias.dataValues;
