@@ -18,6 +18,7 @@ const moment = require('moment');
 const signature = require('./signature');
 const Sequelize = require('sequelize');
 const sgMail = require('@sendgrid/mail');
+const rp = require('request-promise-native');
 sgMail.setApiKey(config.SENDGRID_API_KEY);
 sgMail.setSubstitutionWrappers('{{', '}}');
 const Op = Sequelize.Op;
@@ -234,7 +235,7 @@ methods.reserveAlias = (data) => {
     if (data.alias.length < 3) {
       return reject('Aliases must be at least 3 characters in length aliases of 2 character and less are reserved');
     }
-    data.addressRegistered = false;
+    data.addressRegistered = true;
     methods
       .find(data.alias.toLowerCase())
       .then((alias) => {
@@ -535,7 +536,22 @@ methods.find = (aliasName) => {
         }
       })
       .then((alias) => {
-        if (!alias) { return reject('Could not find alias'); }
+        if (!alias) {
+          //CHECK NANODES ALIASES
+          let options = {
+            uri: "https://www.nanode.co/api/alias?id="+aliasName.toLowerCase(),
+            method: "GET",
+            json:true
+          };
+          rp(options).then((alias) => {
+            if (alias.isAvailable === true) {
+              return reject('Could not find alias');
+            }
+          }).catch((err) => {
+            console.log(err);
+          });
+          return reject('Could not find alias');
+        }
         if (alias.dataValues.phoneRegistered === false) {
           if (moment().diff(moment(alias.dataValues.updatedAt), "minutes") >= 10) {
             alias.destroy()
