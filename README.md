@@ -1,3 +1,7 @@
+# Deprecated
+Worked with some guys from OpenCap to design a better version of this protocol [OpenCap](https://github.com/opencap)
+
+
 [Documentation](https://documenter.getpostman.com/view/2206404/nano-alias/RVfsFYHj) | [Discord](https://discord.gg/ecVcJM3)
 
 # The Problem
