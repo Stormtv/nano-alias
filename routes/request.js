@@ -1,7 +1,6 @@
-const express = require('express');
-const router = express.Router();
-const config = require('../config.json');
-const Request = require('../services/request');
+const express = require('express')
+const router = express.Router()
+const Request = require('../services/request')
 
 router.post('/create', (req, res) => {
   Request
@@ -15,7 +14,7 @@ router.post('/create', (req, res) => {
           'data': {
             'request': request
           }
-        });
+        })
     })
     .catch((err) => {
       res
@@ -23,9 +22,9 @@ router.post('/create', (req, res) => {
         .json({
           'status': 'ERROR',
           'message': err
-        });
-    });
-});
+        })
+    })
+})
 
 router.get('/:request', (req, res) => {
   Request
@@ -39,7 +38,7 @@ router.get('/:request', (req, res) => {
           'data': {
             'request': request
           }
-        });
+        })
     })
     .catch((err) => {
       res
@@ -47,9 +46,9 @@ router.get('/:request', (req, res) => {
         .json({
           'status': 'ERROR',
           'message': err
-        });
-    });
-});
+        })
+    })
+})
 
 router.post('/', (req, res) => {
   Request
@@ -63,7 +62,7 @@ router.post('/', (req, res) => {
           'data': {
             'request': request
           }
-        });
+        })
     })
     .catch((err) => {
       res
@@ -71,8 +70,8 @@ router.post('/', (req, res) => {
         .json({
           'status': 'ERROR',
           'message': err
-        });
-    });
-});
+        })
+    })
+})
 
-module.exports = router;
+module.exports = router

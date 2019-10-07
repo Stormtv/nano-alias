@@ -1,6 +1,6 @@
-const express = require('express');
-const router = express.Router();
-const Address = require('../services/address');
+const express = require('express')
+const router = express.Router()
+const Address = require('../services/address')
 
 router.get('/:address', (req, res) => {
   Address
@@ -14,7 +14,7 @@ router.get('/:address', (req, res) => {
           'data': {
             'aliases': aliases
           }
-        });
+        })
     })
     .catch((err) => {
       res
@@ -22,8 +22,8 @@ router.get('/:address', (req, res) => {
         .json({
           'status': 'ERROR',
           'message': err
-        });
-    });
-});
+        })
+    })
+})
 
-module.exports = router;
+module.exports = router

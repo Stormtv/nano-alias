@@ -19,7 +19,6 @@
   "dependencies": {
     "@sendgrid/mail": "^6.2.1",
     "blakejs": "^1.1.0",
-    "colog": "^1.0.4",
     "datauri": "^1.0.5",
     "express": "^4.16.2",
     "jdenticon": "^1.8.0",

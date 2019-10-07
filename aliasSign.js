@@ -1,5 +1,4 @@
 // Packages
-const colog = require('colog');
 const nacl = require('tweetnacl/nacl'); //We are using a forked version of tweetnacl, so need to import nacl
 const blake = require('blakejs');
 
@@ -98,14 +97,6 @@ function keyFromAccount(account) {
     }		else			{ throw 'Invalid XRB/Nano account.' }
   }
   throw 'Invalid XRB/Nano account.'
-}
-
-function createHash(fields) {
-  let context = blake.blake2bInit(32, null)
-  for (let i = 0; i < fields.length; i++) {
-    blake.blake2bUpdate(context, hex_uint8(fields[i]));
-  }
-  return uint8_hex(blake.blake2bFinal(context));
 }
 
 function signature(fields, secretKey) {

@@ -1,5 +1,6 @@
+// Ignore the syntax of this file
+
 // Packages
-const colog = require('colog');
 const nacl = require('tweetnacl/nacl'); //We are using a forked version of tweetnacl, so need to import nacl
 const blake = require('blakejs');
 

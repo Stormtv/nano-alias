@@ -1,7 +1,6 @@
-const express = require('express');
-const router = express.Router();
-const config = require('../config.json');
-const Alias = require('../services/alias');
+const express = require('express')
+const router = express.Router()
+const Alias = require('../services/alias')
 
 router.post('/create', (req, res) => {
   Alias
@@ -15,7 +14,7 @@ router.post('/create', (req, res) => {
           'data': {
             'alias': alias
           }
-        });
+        })
     })
     .catch((err) => {
       res
@@ -23,9 +22,9 @@ router.post('/create', (req, res) => {
         .json({
           'status': 'ERROR',
           'message': err
-        });
-    });
-});
+        })
+    })
+})
 
 router.post('/avatar', (req, res) => {
   Alias
@@ -39,7 +38,7 @@ router.post('/avatar', (req, res) => {
           'data': {
             'avatar': avatar
           }
-        });
+        })
     })
     .catch((err) => {
       res
@@ -47,9 +46,9 @@ router.post('/avatar', (req, res) => {
         .json({
           'status': 'ERROR',
           'message': err
-        });
-    });
-});
+        })
+    })
+})
 
 router.get('/:alias', (req, res) => {
   Alias
@@ -63,7 +62,7 @@ router.get('/:alias', (req, res) => {
           'data': {
             'alias': alias
           }
-        });
+        })
     })
     .catch((err) => {
       res
@@ -71,9 +70,9 @@ router.get('/:alias', (req, res) => {
         .json({
           'status': 'ERROR',
           'message': err
-        });
-    });
-});
+        })
+    })
+})
 
 router.post('/registerPhone', (req, res) => {
   Alias
@@ -87,7 +86,7 @@ router.post('/registerPhone', (req, res) => {
           'data': {
             'alias': alias
           }
-        });
+        })
     })
     .catch((err) => {
       res
@@ -95,9 +94,9 @@ router.post('/registerPhone', (req, res) => {
         .json({
           'status': 'ERROR',
           'message': err
-        });
-    });
-});
+        })
+    })
+})
 
 router.post('/', (req, res) => {
   Alias
@@ -111,7 +110,7 @@ router.post('/', (req, res) => {
           'data': {
             'alias': alias
           }
-        });
+        })
     })
     .catch((err) => {
       res
@@ -119,9 +118,9 @@ router.post('/', (req, res) => {
         .json({
           'status': 'ERROR',
           'message': err
-        });
-    });
-});
+        })
+    })
+})
 
 router.post('/edit', (req, res) => {
   Alias
@@ -135,7 +134,7 @@ router.post('/edit', (req, res) => {
           'data': {
             'alias': alias
           }
-        });
+        })
     })
     .catch((err) => {
       res
@@ -143,9 +142,9 @@ router.post('/edit', (req, res) => {
         .json({
           'status': 'ERROR',
           'message': err
-        });
-    });
-});
+        })
+    })
+})
 
 router.post('/delete', (req, res) => {
   Alias
@@ -159,7 +158,7 @@ router.post('/delete', (req, res) => {
           'data': {
             'alias': alias
           }
-        });
+        })
     })
     .catch((err) => {
       res
@@ -167,9 +166,9 @@ router.post('/delete', (req, res) => {
         .json({
           'status': 'ERROR',
           'message': err
-        });
-    });
-});
+        })
+    })
+})
 
 router.post('/reset', (req, res) => {
   Alias
@@ -180,7 +179,7 @@ router.post('/reset', (req, res) => {
         .json({
           'status': 'SUCCESS',
           'message': 'Successfully sent email to the associated email address'
-        });
+        })
     })
     .catch((err) => {
       res
@@ -188,8 +187,8 @@ router.post('/reset', (req, res) => {
         .json({
           'status': 'ERROR',
           'message': err
-        });
-    });
-});
+        })
+    })
+})
 
-module.exports = router;
+module.exports = router
